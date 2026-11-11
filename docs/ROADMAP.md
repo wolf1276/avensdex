@@ -1,0 +1,83 @@
+# Avensdex delivery roadmap
+
+All milestones are planned. No implementation, public deployment or successful execution is implied by this checklist.
+
+## 1. Specification and qualification
+
+- [ ] Confirm initial market, collateral/base assets and settlement rules.
+- [ ] Verify exact network, asset decimals, oracle behavior and executable spot venue.
+- [ ] Quote intended entry/exit sizes, depth, fees, gas and repair allowances.
+- [ ] Separate investment admission from any finite owner-authorized execution-validation session.
+- [ ] Freeze module interfaces, accounting invariants, role model, tool versions and deployment manifest schema.
+- [ ] Verify applicable program requirements, submission format and publication destination.
+
+**Gate:** explicit design and reproducible qualification; addresses alone do not prove executable liquidity.
+
+## 2. Contract foundations and exchange
+
+- [ ] Implement explicit asset units and bounded funding math with reference vectors.
+- [ ] Implement canonical custody, exact token deltas, caps, escrow and owner withdrawals.
+- [ ] Implement bounded price-time matching, partial fills, IOC/post-only/reduce-only, expiry and nonces.
+- [ ] Implement bilateral settlement, fees, partial/full closes and liquidation.
+- [ ] Implement funding index settlement, payer limits, rounding, epoch protection and stale-gap behavior.
+- [ ] Verify deployment size, EVM compatibility and worst-case gas.
+
+**Gate:** unit, differential, fuzz and conservation tests pass.
+
+## 3. Strategy authority and genuine execution
+
+- [ ] Implement isolated strategy allocation and finite, revocable onchain policies.
+- [ ] Bind exact routes, assets, units, deadlines, exposure and cost budgets.
+- [ ] Preserve conservative admission using a single capital allocation.
+- [ ] Implement separately scoped execution validation only if needed.
+- [ ] Execute real spot/perp legs with actual inventory/fill reconciliation.
+- [ ] Prove atomic rollback or explicit partial-leg recovery, retained inventory ownership and owner exits.
+- [ ] Persist chain/deployment-aware intents, nonces, costs and audit state.
+
+**Gate:** adversarial authorization, execution, recovery and withdrawal tests pass.
+
+## 4. Guardian and public transport
+
+- [ ] Read funding, prices, policies and positions at one canonical block.
+- [ ] Simulate and submit bounded actions with durable single-writer coordination.
+- [ ] Handle unknown, replaced, reverted and cancelled transactions without duplicate exposure.
+- [ ] Monitor delta, margin, funding expiry, counterparty exits and cost budgets.
+- [ ] Verify genuine public funding conservation and successful-execution restart.
+- [ ] Keep synthetic research fixtures out of live product execution paths.
+
+**Gate:** real transport and restart reconciliation, not merely a submission hash.
+
+## 5. Client and read boundary
+
+- [ ] Build the landing and manual Trade terminal with valid navigation.
+- [ ] Wire wallet connection, chain switching, approvals, deposits and account-change invalidation.
+- [ ] Show actual positions, funding units/history, gas, margin, costs and receipt links.
+- [ ] Integrate strategy allocation, policy confirmation, pending legs, pause/revoke/recover/close/withdraw inside Trade.
+- [ ] Validate read/proposal inputs, freshness, numeric bounds, request sizes and resource limits.
+- [ ] Verify keyboard/focus/mobile and disconnected/loading/empty/failed states.
+
+**Gate:** actual wallet-driven browser flow with canonical data; no simulated success substitute.
+
+## 6. Assurance and public release
+
+- [ ] Run seeded actual-runtime scenarios, both funding signs and failure/conservation matrices.
+- [ ] Reconcile hand traces and metrics against actual token deltas, receipts, funding and gas.
+- [ ] Review permissions, oracle/venue trust, replay, precision and transaction recovery.
+- [ ] Add reproducible CI, clean install/build, contract/TS/browser checks and secret/dependency scanning.
+- [ ] Deploy a fresh capped Fuji instance with verified code, assets, roles and run budgets.
+- [ ] Verify deposit, matched trades, real swap/hedge, funding, recovery, revocation and settled owner withdrawals.
+- [ ] Record whether public execution proves validation or economically admitted investment.
+- [ ] Prepare setup/runbooks, safe stop/recovery, live URL, real transaction evidence and an accurate demo.
+- [ ] Publish only after destination, disclosure and release checks pass.
+
+**Gate:** evidence-backed public lifecycle, reconciled custody and no unresolved money/security blocker.
+
+## Evidence discipline
+
+Track implementation, integration availability, economic eligibility and activation separately. For each completed task record source revision, checks actually run, environment/network/deployment identity, receipt links where applicable, costs, pending liabilities and limitations.
+
+Local and pinned-fork tests do not constitute public Fuji execution. A correct admission rejection does not prove a completed hedge. No promised profitability or fixed completion date.
+
+## Deferred scope
+
+Mainnet activation, rolling multi-interval carry, pooled shares, multiple venues/assets, custom L1 infrastructure, bridges, proxies and gas sponsorship require separate reviewed decisions.
