@@ -8,6 +8,7 @@ from urllib.request import Request, urlopen
 
 CONFIG = Path(__file__).resolve().parents[1] / "config" / "fuji.json"
 RPC = "https://api.avax-test.network/ext/bc/C/rpc"
+SECONDARY_RPC = "https://avalanche-fuji-c-chain-rpc.publicnode.com"
 MAX_RESPONSE_BYTES = 1_048_576
 
 
@@ -20,20 +21,24 @@ def validate_config(config):
             or config.get("network") != "avalanche-fuji"
             or config.get("schemaVersion") != 1
             or config.get("rpcUrl") != RPC
+            or config.get("secondaryRpcUrl") != SECONDARY_RPC
             or config.get("executionEnabled") is not False
             or config.get("mainnetEnabled") is not False):
         raise QualificationError("Only the fixed, execution-disabled Fuji configuration is supported")
 
 
-def rpc(method, params):
-    # Fixed endpoint and method allowlist; no env overrides or secret-bearing URLs.
+def rpc(method, params, endpoint=RPC):
+    # Fixed endpoints and method allowlist; no env overrides or secret-bearing URLs.
+    if endpoint not in (RPC, SECONDARY_RPC):
+        raise QualificationError("RPC endpoint is not allowlisted")
     if method not in ("eth_chainId", "eth_getBlockByNumber"):
         raise QualificationError("RPC method is not read-only allowlisted")
-    request = Request(RPC, data=json.dumps({
+    request = Request(endpoint, data=json.dumps({
         "jsonrpc": "2.0", "id": 1, "method": method, "params": params,
-    }).encode(), headers={"Content-Type": "application/json"})
+    }).encode(), headers={"Content-Type": "application/json",
+                          "User-Agent": "avensdex-qualification/1.0"})
     with urlopen(request, timeout=15) as response:
-        if response.geturl() != RPC:
+        if response.geturl() != endpoint:
             raise QualificationError("RPC redirect is not permitted")
         raw = response.read(MAX_RESPONSE_BYTES + 1)
     if len(raw) > MAX_RESPONSE_BYTES:

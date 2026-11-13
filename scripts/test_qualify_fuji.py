@@ -27,6 +27,7 @@ class FujiQualificationTests(unittest.TestCase):
     def test_unsafe_configuration_fails_before_network(self):
         for field, value in [("chainId", 43114), ("executionEnabled", True),
                              ("mainnetEnabled", True), ("rpcUrl", "https://example.com"),
+                             ("secondaryRpcUrl", "https://example.com"),
                              ("schemaVersion", 2), ("network", "mainnet")]:
             with self.subTest(field=field):
                 config = copy.deepcopy(self.config)
