@@ -1,6 +1,8 @@
 # Avensdex delivery roadmap
 
-All milestones are planned. No implementation, public deployment or successful execution is implied by this checklist.
+M0 qualification has started with tested read-only network probes; see [recorded evidence and blockers](FUJI_QUALIFICATION.md). All milestone gates remain incomplete. No public deployment or successful trading execution is implied by this checklist.
+
+The [Avalanche migration plan](AVAX_MIGRATION_PLAN.md) expands these milestones into qualification decisions, workstreams, acceptance gates and operating controls.
 
 ## 1. Specification and qualification
 

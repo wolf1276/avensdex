@@ -17,6 +17,18 @@ Initial development targets Avalanche C-Chain Fuji. Mainnet execution is outside
 
 ## Status
 
-Planning stage. No application, contracts or public deployment are included yet. No live trading, yield or production-readiness claims are made.
+M0 qualification has started: read-only Fuji network and independent-provider block checks are implemented and tested. No application, contracts or public deployment are included yet. No live trading, yield or production-readiness claims are made.
 
-See [Architecture](docs/ARCHITECTURE.md), [Roadmap](docs/ROADMAP.md) and [contributor instructions](AGENTS.md).
+## Run qualification checks
+
+Requires Python 3.12; no dependencies or wallet needed.
+
+```sh
+python3 -m unittest discover -s scripts -t . -v
+python3 scripts/qualify_fuji.py
+python3 -m scripts.compare_fuji_rpcs
+```
+
+The network probes are read-only. Mainnet and transaction execution remain disabled.
+
+See [Fuji qualification evidence and blockers](docs/FUJI_QUALIFICATION.md), the [Avalanche migration plan](docs/AVAX_MIGRATION_PLAN.md), [Architecture](docs/ARCHITECTURE.md) and [Roadmap](docs/ROADMAP.md).
