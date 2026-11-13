@@ -27,3 +27,8 @@ __pycache__/
 
 # Local NEARFlow reference snapshot; includes unreviewed rights/evidence and instructions.
 /legacy/nearflow/
+
+# Local agent/session state is not product source.
+.pi/
+.agents/
+.claude/

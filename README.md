@@ -19,7 +19,7 @@ Initial development targets Avalanche C-Chain Fuji. Mainnet execution is outside
 
 The complete NEARFlow working-source baseline has been copied locally and hash-verified. Its existing architecture, UI and migration plan are the implementation basis; follow [`todo.md`](todo.md) for the six phases and current tasks. See [baseline provenance and publication limits](docs/NEARFLOW_BASELINE.md).
 
-Read-only Fuji network and independent-provider block checks are implemented and tested. The EVM port is not complete; no Avalanche application, contracts or public deployment are claimed. No live trading, yield or production-readiness claims are made.
+Read-only Fuji network checks and the [Solidity funding-math port](docs/EVM_FOUNDATION.md) are implemented and tested against the existing TypeScript/Rust reference fixtures. The full EVM port is not complete; no deployed Avalanche application or public contract execution is claimed. No live trading, yield or production-readiness claims are made.
 
 ## Run qualification checks
 

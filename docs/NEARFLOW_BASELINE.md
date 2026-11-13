@@ -28,4 +28,4 @@ The full baseline stays ignored/local while rights, evidence and sensitive-data 
 
 `client/licenses/terminal` and `client/licenses/walletconnect` contain notices that must accompany reused code/assets. `docs/UI_SOURCES.md` records a missing supplied landing-source/artwork license; attribution alone does not grant redistribution rights. Resolve that before pushing the landing implementation/artwork. Instruction guides are local reference only, not publication payload.
 
-The prior root Node/TypeScript/Foundry scaffolding is unfinished, uncommitted work, not a completed phase. Public activation, code parity, integrations, clean release and old-chain retirement remain separately gated.
+The initial Node/TypeScript/Foundry scaffolding now supports the [tested funding-math port](EVM_FOUNDATION.md). This is not a completed Phase 1. Full protocol parity, public activation, integrations, clean release and old-chain retirement remain separately gated.

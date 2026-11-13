@@ -1,0 +1,8 @@
+Source: user-provided NEARFlow project, Git HEAD bc3ac2f4fa9e181073cf9b6efa55dc6ba7ffa23c plus working-tree changes.
+Provenance: config/nearflow-source.json.
+
+preview.ts, preview.test.ts, vectors.json, traces.json and calibration-vectors.json are retained unchanged.
+reference/ retains the pure Rust funding crate; only include_str! paths change to share the canonical JSON fixtures.
+contracts/evm/src/libraries/FundingMath.sol is the Solidity port of those equations, not a replacement funding model.
+
+No project-wide source license was supplied with NEARFlow. This notice records provenance and does not grant third-party redistribution rights or change ownership. No MIT/Apache license is inferred from dependencies or other UI assets.

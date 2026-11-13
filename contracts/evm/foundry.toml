@@ -1,0 +1,15 @@
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+libs = []
+solc_version = "0.8.30"
+evm_version = "paris"
+optimizer = true
+optimizer_runs = 200
+bytecode_hash = "none"
+fs_permissions = [{ access = "read", path = "../../packages/funding" }]
+
+[profile.default.fuzz]
+runs = 1000
+seed = "0x6176656e73646578"

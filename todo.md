@@ -11,8 +11,8 @@ Local reference: `legacy/nearflow/` (ignored, not a published runtime). [Baselin
 - [x] Exclude credentials, environment files, dependency/build directories and private key files.
 - [ ] Finish module-by-module review and establish fresh source regression results; old test counts are not new evidence.
 - [ ] Preserve third-party notices; resolve landing code/artwork redistribution permission before publishing it.
-- [ ] Pin EVM tools/compiler target; reuse the existing TypeScript/Rust funding references and golden vectors.
-- [ ] Port funding controller math with signed-rounding, EMA, deadband, rate/step caps and signal validation parity.
+- [x] Pin initial EVM tools/compiler target; reuse existing TypeScript/Rust funding references and golden vectors. [Local checkpoint](docs/EVM_FOUNDATION.md); public target verification remains pending.
+- [x] Port pure funding controller math with signed-rounding, EMA, deadband, rate/step caps and signal validation parity. Golden vectors, stateful trace mirrors and 1,000 Solidity fuzz runs pass; exchange accrual/settlement is still Phase 2.
 - [ ] Port asset units and bilateral risk math; retain size6, price18, collateral6 and wrapped-base18/dust rules.
 - [ ] Freeze typed vault/exchange/executor/oracle/reader interfaces, role bindings and manifest schema.
 - [ ] Qualify exact Fuji collateral/base, independent oracle, spot route/version, finality and operational limits. AVAX/WAVAX is a candidate, not an enabled market.
