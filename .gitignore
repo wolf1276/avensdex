@@ -18,3 +18,5 @@ playwright-report/
 keystores/
 credentials/
 .DS_Store
+__pycache__/
+*.pyc

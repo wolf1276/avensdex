@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "network": "avalanche-fuji",
+  "chainId": 43113,
+  "nativeCurrency": "AVAX",
+  "rpcUrl": "https://api.avax-test.network/ext/bc/C/rpc",
+  "source": "https://build.avax.network/docs/primary-network",
+  "executionEnabled": false,
+  "mainnetEnabled": false
+}
