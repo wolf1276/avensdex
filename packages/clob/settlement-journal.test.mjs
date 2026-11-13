@@ -489,17 +489,21 @@ test('an uncertain startup reconciliation checkpoint retains the crash lock', as
 });
 
 
-test('another sender or transport nonce cannot satisfy an intent even with the expected fill log', async t => {
-  for (const mismatch of [{ sender: addr('9') }, { nonce: '8' }]) {
-    const i = intent(), receipt = { ...successReceipt(i), ...mismatch };
-    const reader = localMockReader({ receipt }), j = open(directory(t), reader);
-    const r = j.recordIntent(i);
-    j.recordBroadcast(r.intentId, { txHash, sender, nonce: '7' });
-    const result = await j.reconcile(r.intentId);
-    assert.equal(result.status, 'unknown');
-    assert.equal(result.reason, 'INVALID_RECEIPT');
-    assert.deepEqual(j.confirmedFills(), []);
-    j.close();
+test('wrong sender/nonce cannot resolve matching-fill or reverted receipts or unblock retries', async t => {
+  for (const status of ['success', 'reverted']) {
+    for (const mismatch of [{ sender: addr('9') }, { nonce: '8' }]) {
+      const i = intent(), receipt = { ...successReceipt(i), ...mismatch, status };
+      if (status === 'reverted') receipt.logs = [];
+      const reader = localMockReader({ receipt }), j = open(directory(t), reader);
+      const r = j.recordIntent(i);
+      j.recordBroadcast(r.intentId, { txHash, sender, nonce: '7' });
+      const result = await j.reconcile(r.intentId);
+      assert.equal(result.status, 'unknown');
+      assert.equal(result.reason, 'INVALID_RECEIPT');
+      assert.deepEqual(j.confirmedFills(), []);
+      assert.throws(() => j.recordIntent(intent({ nonce: '8', pairId: '2' })), /RECONCILE_ORDER_FIRST/);
+      j.close();
+    }
   }
 });
 
