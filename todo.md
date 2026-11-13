@@ -35,6 +35,7 @@ No phase is complete merely because its plan or files exist. Report implementati
 - [ ] Finish module-by-module review and establish fresh source regression results; old test counts are not new evidence.
 - [ ] Preserve third-party notices; resolve landing code/artwork redistribution permission before publishing it.
 - [x] Pin initial EVM tools/compiler target; reuse existing TypeScript/Rust funding references and golden vectors. [Local checkpoint](docs/EVM_FOUNDATION.md); public target verification remains pending.
+- [x] Add pinned, read-only CI for clean install, dependency audit, TS/Python/Solidity tests, Solidity formatting and locked Rust reference checks. Local equivalents pass; hosted GitHub Actions has not been run.
 - [x] Port pure funding controller math with signed-rounding, EMA, deadband, rate/step caps and signal validation parity. Golden vectors, stateful trace mirrors and 1,000 Solidity fuzz runs pass; exchange accrual/settlement is still Phase 2.
 - [x] Port asset units and bilateral risk math; retain size6, price18, collateral6 and wrapped-base18/dust rules. [Equations, bounds and checks](docs/ASSET_AND_RISK_UNITS.md); source accounting vectors and local TS/Foundry checks pass.
 - [x] Freeze initial typed vault/exchange/executor/oracle/reader interfaces, role bindings and execution-disabled manifest schema. [Interface/authority contract](docs/MODULE_CONTRACT.md); selector/parser checks pass. Runtime enforcement remains Phase 2/4; enabled activation needs a separately reviewed schema.
