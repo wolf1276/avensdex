@@ -20,3 +20,7 @@ credentials/
 .DS_Store
 __pycache__/
 *.pyc
+
+# Local agent instructions and implementation notes (keep product docs tracked).
+[Aa][Gg][Ee][Nn][Tt][Ss].md
+[Ii][Mm][Pp][Ll][Ee][Mm][Ee][Nn][Tt][Aa][Tt][Ii][Oo][Nn].md
