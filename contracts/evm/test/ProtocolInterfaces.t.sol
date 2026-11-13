@@ -14,6 +14,12 @@ contract ProtocolInterfacesTest {
         require(IAvensVault.withdrawStrategyBase.selector == bytes4(keccak256("withdrawStrategyBase(uint64,uint256)")));
     }
 
+    function testBoundedMatchingAndExpiryRemainExplicit() public pure {
+        require(IAvensExchange.matchOrders.selector == bytes4(keccak256("matchOrders(uint64,uint64)")));
+        require(IAvensExchange.expireOrder.selector == bytes4(keccak256("expireOrder(uint64)")));
+        require(IAvensExchange.cancelAll.selector == bytes4(keccak256("cancelAll(uint64,uint32)")));
+    }
+
     function testCoreSelectorsRemainTyped() public pure {
         require(IAvensVault.deposit.selector == bytes4(keccak256("deposit(uint128)")));
         require(IAvensVault.transferFunding.selector == bytes4(keccak256("transferFunding(uint64,int128)")));

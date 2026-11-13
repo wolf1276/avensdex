@@ -6,6 +6,9 @@ import {FundingMath as F} from "../libraries/FundingMath.sol";
 interface IAvensExchange {
     function placeOrder(uint64 strategyId, uint64 nonce, T.Order calldata order) external returns (uint64 orderId);
     function cancelOrder(uint64 orderId) external;
+    function cancelAll(uint64 strategyId, uint32 marketId) external;
+    function expireOrder(uint64 orderId) external;
+    function matchOrders(uint64 makerOrderId, uint64 takerOrderId) external returns (uint64 pairId);
     function closePosition(uint64 pairId, uint64 strategyId, uint128 size6, uint128 minPrice18, uint128 maxPrice18)
         external;
     function settleFunding(uint64 pairId) external;

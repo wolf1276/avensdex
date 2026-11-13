@@ -41,6 +41,8 @@ Pending external custody, if ever introduced, must leave local spendable buckets
 
 `settlePair`'s liquidator parameter is only a bounded liquidation reward destination authenticated by the exchange's liquidation path, not an owner withdrawal recipient. The vault must reject nonzero reward for the zero address, excess release/reward and unknown pair IDs. Trade/funding/oracle rules are enforced by the exchange; the vault independently enforces ownership/bucket bounds and conservation. The exchange is therefore a critical trusted module, not an untrusted plugin.
 
+Orders retain source bounds: size6 at most `1e15`, positive integer leverage capped by initial margin, expiry within 86,400 seconds, minimum one collateral currency unit notional, incompatible post-only/IOC rejection and bounded source order/position capacity. Leverage is dimensionless, not bps. Permissionless `matchOrders` must enforce actual best price-time priority and all execution checks; caller-supplied IDs cannot select a worse counterparty. `expireOrder` only releases an actually expired order; owner-only `cancelAll` stays bounded by that book's maximum 16 orders (marketId zero means all its markets). These ABI paths preserve source keeper/recovery functionality; they do not grant keeper payout authority.
+
 No generic `credit`, `execute(bytes)`, arbitrary calldata, delegatecall, sweep-user-assets or delegate payout endpoint is specified. Synchronous transfer/swap failure reverts its entire accounting transition; do not copy NEAR asynchronous refund callbacks.
 
 ## Nonces and policies
