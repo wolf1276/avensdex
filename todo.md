@@ -37,7 +37,7 @@ No phase is complete merely because its plan or files exist. Report implementati
 - [x] Pin initial EVM tools/compiler target; reuse existing TypeScript/Rust funding references and golden vectors. [Local checkpoint](docs/EVM_FOUNDATION.md); public target verification remains pending.
 - [x] Port pure funding controller math with signed-rounding, EMA, deadband, rate/step caps and signal validation parity. Golden vectors, stateful trace mirrors and 1,000 Solidity fuzz runs pass; exchange accrual/settlement is still Phase 2.
 - [x] Port asset units and bilateral risk math; retain size6, price18, collateral6 and wrapped-base18/dust rules. [Equations, bounds and checks](docs/ASSET_AND_RISK_UNITS.md); source accounting vectors and local TS/Foundry checks pass.
-- [ ] Freeze typed vault/exchange/executor/oracle/reader interfaces, role bindings and manifest schema.
+- [x] Freeze initial typed vault/exchange/executor/oracle/reader interfaces, role bindings and execution-disabled manifest schema. [Interface/authority contract](docs/MODULE_CONTRACT.md); selector/parser checks pass. Runtime enforcement remains Phase 2/4; enabled activation needs a separately reviewed schema.
 - [ ] Qualify exact Fuji collateral/base, independent oracle, spot route/version, finality and operational limits. AVAX/WAVAX is a candidate, not an enabled market.
 
 **Gate:** reproducible local parity checks; exact integration blockers recorded. No address placeholders enable execution.
