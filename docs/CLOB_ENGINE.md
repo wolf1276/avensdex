@@ -32,7 +32,7 @@ Sixteen matcher/journal tests passed, including process crash/restart, corrupt/t
 
 ## Operational limits and next boundaries
 
-The core has no public admission server, wallet authority, collateral ledger, signer, blockchain transaction sender or settlement implementation. It expects a trusted adapter to authenticate commands; engine-level owner strings alone are not cryptographic authentication. Signed gateway/contract checks are separate pending tasks. The position command is trusted reconciler input only, not a mechanism for clients to set balances.
+The core has no public admission server, wallet authority, collateral ledger, signer, blockchain transaction sender or settlement implementation. It expects a trusted adapter to authenticate commands; engine-level owner strings alone are not cryptographic authentication. The [signed EOA adapter](CLOB_ADMISSION.md) now implements the local authentication boundary and durable proof capture. Public deployment/readiness gating and actual contract checks remain Phase 3 tasks. The position command is trusted reconciler input only, not a mechanism for clients to set balances.
 
 Book capacity is 256 resting orders; trader identities at most 1,000; pending matches at most 4,096; retained orders at most 8,704. A maximum 64 MiB command journal and 32 KiB record bound fail closed. Unsettled order identities are never pruned to make room. Pending settlement confirmation/reversion and capacity release are deliberately unimplemented until genuine settlement reconciliation exists.
 

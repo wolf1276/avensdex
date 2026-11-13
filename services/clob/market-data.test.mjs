@@ -4,15 +4,18 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { WebSocket } from 'ws';
+import { keccak256, stringToHex } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
+import { orderTypedData, cancelTypedData } from '../../packages/clob/admission.ts';
 import { JournaledMatcher } from '../../packages/clob/journal.ts';
 import { MarketDataFeed } from '../../packages/clob/feed.ts';
 import { startMarketData, sendBounded, MAX_BUFFERED_BYTES, MAX_CLIENTS } from './market-data.ts';
 const A = `0x${'1'.repeat(40)}`;
 const command = { type: 'submit', at: 1000, order: { id: 'a', trader: A, nonce: '1', marketId: 1, side: 'sell', kind: 'limit',
   size6: '10', limitPrice18: '100', expiry: 2000, reduceOnly: false, postOnly: false, ioc: false } };
-async function setup(t, clock = () => 1000) {
+async function setup(t, clock = () => 1000, binding = { chainId: 43113, marketId: 1, settlementContract: null }) {
   const dir = mkdtempSync(join(tmpdir(), 'avensdex-feed-test-'));
-  const journal = JournaledMatcher.open(dir, { chainId: 43113, marketId: 1, settlementContract: null }, true);
+  const journal = JournaledMatcher.open(dir, binding, true);
   const service = await startMarketData(journal, 0, clock), sockets = [];
   t.after(async () => { for (const socket of sockets) socket.terminate(); await service.close(); journal.close(); rmSync(dir, { recursive: true, force: true }); });
   const http = `http://127.0.0.1:${service.port}`, url = `ws://127.0.0.1:${service.port}/stream`;
@@ -85,4 +88,34 @@ test('slow or failed consumers cannot block producer acknowledgments', () => {
   assert.equal(sendBounded(slow, 'x'), false); assert.equal(closed, true);
   const failed = { ...slow, bufferedAmount: 0, close: () => {}, terminate: () => { terminated = true; }, send: () => { throw Error('closed'); } };
   assert.equal(sendBounded(failed, 'x'), false); assert.equal(terminated, true);
+});
+
+// Public deterministic keys and contract address below are test-only, never chain evidence.
+const signedBinding = { chainId: 43113, marketId: 1, settlementContract: `0x${'3'.repeat(40)}` };
+const signer = privateKeyToAccount(keccak256(stringToHex('avensdex public service fixture')));
+async function signedOrder() {
+  const { id: _id, ...order } = command.order;
+  const signed = { ...order, trader: signer.address.toLowerCase(), leverage: 2, maxFeeBps: 10 };
+  return { type: 'order', order: signed, signature: await signer.signTypedData(orderTypedData(signedBinding, signed, 1000)) };
+}
+test('signed in-process admission fsyncs before WebSocket delivery; valid signatures cannot enable HTTP trading', async t => {
+  const { connect, service, journal, http } = await setup(t, () => 1000, signedBinding);
+  const peer = await connect(), feed = new MarketDataFeed(); feed.receive(await peer.next());
+  const envelope = await signedOrder(), forged = structuredClone(envelope); forged.order.size6 = '11';
+  await assert.rejects(service.applySigned(forged), /SIGNER_MISMATCH/); assert.equal(journal.snapshot().seq, 0);
+  const result = await service.applySigned(envelope); assert.equal(result.settlement, 'unavailable');
+  for (const event of result.events) { const actual = await peer.next(); assert.deepEqual(actual, event); assert.equal(feed.receive(actual), 'applied'); }
+  assert.deepEqual(feed.view().snapshot, journal.snapshot());
+  const before = journal.snapshot();
+  const response = await fetch(`${http}/orders`, { method: 'POST', body: JSON.stringify(envelope) });
+  assert.equal(response.status, 503); assert.deepEqual(journal.snapshot(), before);
+  const cancel = { trader: envelope.order.trader, orderHash: before.orders[0].id, nonce: '1', expiry: 2000 };
+  const cancelled = await service.applySigned({ type: 'cancel', cancel, signature: await signer.signTypedData(cancelTypedData(signedBinding, cancel, 1000)) });
+  for (let i = 0; i < cancelled.events.length; i++) feed.receive(await peer.next());
+  assert.equal(feed.view().snapshot.bestAsk, null); assert.deepEqual(feed.view().snapshot, journal.snapshot());
+});
+test('unset executable deployment domain refuses even correctly signed in-process requests', async t => {
+  const { service, journal } = await setup(t);
+  await assert.rejects(service.applySigned(await signedOrder()), /SETTLEMENT_DOMAIN_UNAVAILABLE/);
+  assert.equal(journal.snapshot().seq, 0);
 });

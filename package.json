@@ -26,6 +26,7 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
+    "viem": "2.57.19",
     "ws": "8.23.0"
   }
 }

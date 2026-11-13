@@ -21,7 +21,7 @@ The [Avalanche migration plan](AVAX_MIGRATION_PLAN.md) expands these milestones 
 
 - [x] Implement explicit asset units and bounded pure funding/risk math with source reference vectors and local property tests. [Phase 1 results](PHASE1_STATUS.md); stateful exchange implementation remains open.
 - [ ] Implement canonical custody, exact token deltas, caps, escrow and owner withdrawals.
-- [ ] Implement bounded price-time matching, partial fills, IOC/post-only/reduce-only, expiry and nonces.
+- [x] Implement bounded offchain price-time matching, partial fills, IOC/post-only/reduce-only, expiry and nonces; [Phase 2 signed local admission](CLOB_ADMISSION.md) is tested. Public activation remains gated on actual custody/settlement and deployment readiness.
 - [ ] Implement bilateral settlement, fees, partial/full closes and liquidation.
 - [ ] Implement funding index settlement, payer limits, rounding, epoch protection and stale-gap behavior.
 - [ ] Verify deployment size, EVM compatibility and worst-case gas.

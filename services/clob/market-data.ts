@@ -1,7 +1,8 @@
 import { createServer } from 'node:http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { JournaledMatcher } from '../../packages/clob/journal.ts';
-import { MAX_FEED_BYTES, type Command } from '../../packages/clob/engine.ts';
+import { MAX_FEED_BYTES, type Command, type Event } from '../../packages/clob/engine.ts';
+import { admitSigned } from '../../packages/clob/admission.ts';
 
 export const MAX_CLIENTS = 16;
 export const MAX_BUFFERED_BYTES = MAX_FEED_BYTES;
@@ -64,13 +65,17 @@ export async function startMarketData(journal: JournaledMatcher, port = 8787, cl
     });
   });
   // Trusted in-process producer boundary only. Network clients cannot call this or inject confirmed positions.
-  function apply(command: Command, proof: unknown = null) {
-    const events = journal.apply(command, proof);
+  function publish(events: Event[]) {
     for (const event of events) {
       const text = JSON.stringify(event);
       for (const client of wss.clients) sendBounded(client, text);
     }
     return { seq: journal.snapshot().seq, events };
+  }
+  function apply(command: Command, proof: unknown = null) { return publish(journal.apply(command, proof)); }
+  async function applySigned(envelope: unknown) {
+    const result = await admitSigned(journal, envelope, clock());
+    return { ...publish(result.events), settlement: 'unavailable' as const };
   }
   let stopped = false;
   const timer = setInterval(() => {
@@ -89,7 +94,7 @@ export async function startMarketData(journal: JournaledMatcher, port = 8787, cl
     });
   } catch (error) { clearInterval(timer); wss.close(); throw error; }
   const address = server.address(); if (!address || typeof address === 'string') throw Error('LISTEN_FAILED');
-  return { port: address.port, apply,
+  return { port: address.port, apply, applySigned,
     async close() {
       stopped = true; clearInterval(timer);
       for (const client of wss.clients) client.terminate();

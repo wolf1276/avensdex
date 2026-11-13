@@ -1,4 +1,4 @@
-// Synthetic, local-only benchmark fixtures. No RPC, wallet signing, transfers or product liquidity.
+// Synthetic local fixtures; only public fixture-key signatures. No RPC, live wallet, transfers or product liquidity.
 import { performance } from 'node:perf_hooks';
 import { cpus, totalmem, platform, release } from 'node:os';
 import { createHash } from 'node:crypto';
@@ -7,6 +7,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { WebSocket } from 'ws';
+import { hashTypedData, keccak256, stringToHex } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
+import { orderTypedData, cancelTypedData } from '../packages/clob/admission.ts';
 import { Matcher } from '../packages/clob/engine.ts';
 import { JournaledMatcher } from '../packages/clob/journal.ts';
 import { startMarketData } from '../services/clob/market-data.ts';
@@ -31,6 +34,20 @@ function paired(factory, rounds, count) {
   }
   return stats(samples, performance.now() - start);
 }
+async function subscribe(service) {
+  const socket = new WebSocket(`ws://127.0.0.1:${service.port}/stream`);
+  let seq = -1; const waiters = new Map();
+  socket.on('error', () => {});
+  socket.on('message', raw => {
+    const event = JSON.parse(raw.toString()); seq = event.seq;
+    for (const [target, done] of waiters) if (target <= seq) { waiters.delete(target); done(); }
+  });
+  const wait = target => seq >= target ? Promise.resolve() : new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => { waiters.delete(target); reject(Error('delivery timeout')); }, 5000);
+    waiters.set(target, () => { clearTimeout(timeout); resolve(); });
+  });
+  await wait(0); return { socket, wait };
+}
 paired(r => new Matcher(`warmup_${r}`), 1, 64);
 const core = paired(r => new Matcher(`paired_${r}`), 8, 128);
 const sweepSamples = [], sweepWall = performance.now();
@@ -52,33 +69,43 @@ try {
   const durable = paired(() => journal, 1, 64); journal.close();
   journal = JournaledMatcher.open(join(directory, 'delivery'), binding, true);
   service = await startMarketData(journal, 0, () => 1000);
-  socket = new WebSocket(`ws://127.0.0.1:${service.port}/stream`);
-  let seq = -1; const waiters = new Map();
-  socket.on('error', () => {});
-  socket.on('message', raw => {
-    const event = JSON.parse(raw.toString()); seq = event.seq;
-    for (const [target, done] of waiters) if (target <= seq) { waiters.delete(target); done(); }
-  });
-  const wait = target => seq >= target ? Promise.resolve() : new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => { waiters.delete(target); reject(Error('delivery timeout')); }, 5000);
-    waiters.set(target, () => { clearTimeout(timeout); resolve(); });
-  });
-  await wait(0);
+  let connection = await subscribe(service); socket = connection.socket;
   const delivered = [], wall = performance.now();
   for (let i = 1; i <= 50; i++) {
     for (const command of [{ type: 'submit', at: 1000, order: order(`a${i}`, { nonce: String(i) }) },
       { type: 'cancel', at: 1000, id: `a${i}`, trader: A }]) {
-      const started = performance.now(), result = service.apply(command); await wait(result.seq); delivered.push(performance.now() - started);
+      const started = performance.now(), result = service.apply(command); await connection.wait(result.seq); delivered.push(performance.now() - started);
     }
   }
   const delivery = stats(delivered, performance.now() - wall);
-  const paths = ['packages/clob/engine.ts', 'packages/clob/journal.ts', 'services/clob/market-data.ts', 'scripts/benchmark-clob.mjs'];
+  socket.terminate(); await service.close(); journal.close();
+  const signedBinding = { ...binding, settlementContract: `0x${'3'.repeat(40)}` };
+  const signer = privateKeyToAccount(keccak256(stringToHex('avensdex public benchmark fixture')));
+  const envelopes = [];
+  for (let i = 1; i <= 50; i++) {
+    const { id: _id, ...unsigned } = order(`s${i}`, { trader: signer.address.toLowerCase(), nonce: String(i) });
+    const signed = { ...unsigned, leverage: 2, maxFeeBps: 10 }, typed = orderTypedData(signedBinding, signed, 1000);
+    envelopes.push({ type: 'order', order: signed, signature: await signer.signTypedData(typed) });
+    const cancel = { trader: signed.trader, orderHash: hashTypedData(typed), nonce: signed.nonce, expiry: 2000 };
+    envelopes.push({ type: 'cancel', cancel, signature: await signer.signTypedData(cancelTypedData(signedBinding, cancel, 1000)) });
+  }
+  journal = JournaledMatcher.open(join(directory, 'signed-delivery'), signedBinding, true);
+  service = await startMarketData(journal, 0, () => 1000);
+  connection = await subscribe(service); socket = connection.socket;
+  const signedSamples = [], signedWall = performance.now();
+  for (const envelope of envelopes) {
+    const started = performance.now(), result = await service.applySigned(envelope);
+    await connection.wait(result.seq); signedSamples.push(performance.now() - started);
+  }
+  const signedDelivery = stats(signedSamples, performance.now() - signedWall);
+  const paths = ['packages/clob/engine.ts', 'packages/clob/journal.ts', 'packages/clob/admission.ts', 'services/clob/market-data.ts', 'scripts/benchmark-clob.mjs'];
   const sources = Object.fromEntries(paths.map(path => [path, createHash('sha256').update(readFileSync(new URL(`../${path}`, import.meta.url))).digest('hex')]));
   console.log(JSON.stringify({ observedAt: new Date().toISOString(), sourceRevision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
     dirty: execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim().length > 0, sources,
     environment: { node: process.version, os: `${platform()} ${release()}`, cpu: cpus()[0]?.model, logicalCpus: cpus().length, memoryBytes: totalmem() },
-    corePaired: core, sweep256: sweep, durablePaired: durable, durableLoopbackWebSocket: delivery,
-    limitations: ['Synthetic local fixtures only; no public Fuji execution or liquidity', 'No signatures, HTTP admission, RPC or chain-finality measurement',
+    corePaired: core, sweep256: sweep, durablePaired: durable, durableLoopbackWebSocket: delivery, signedDurableLoopbackWebSocket: signedDelivery,
+    limitations: ['Synthetic local fixtures only; no public Fuji execution or liquidity', 'No HTTP admission, RPC or chain-finality measurement; signed row is trusted in-process ingress',
+      'Fixture signatures are precomputed outside measured time; signed row includes recovery, journal/fsync and final-frame delivery',
       'Core paired workload has at most one resting maker; state-copy/history overhead included', 'Sweep distribution has only ten samples; no statistical confidence claim',
       'Durable fsync uses this machine temporary directory/filesystem; no power-loss/remote-disk guarantee', 'Loopback delivery includes journal fsync and waits for final BBO frame; one subscriber, not WAN/fanout load'] }, null, 2));
 } finally {

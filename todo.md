@@ -21,19 +21,19 @@ NEAR source is preserved. New work lives in `packages/clob`, `services/clob` and
 
 Evidence: [foundation checks](docs/FOUNDATION_CHECKS.md), [Phase 1 scope](docs/PHASE1_STATUS.md), [read-only Fuji observations](docs/FUJI_QUALIFICATION.md). Do not call public qualification complete from local math tests or token metadata.
 
-## Phase 2 — deterministic offchain matching and market data (P0)
+## Phase 2 — deterministic offchain matching and market data (P0; local gate complete)
 
 - [x] One bounded TypeScript in-memory CLOB; limit and price-bounded IOC market orders; buy/sell, price-time/FIFO, multiple orders per level, partials and self-trade prevention. [Core/journal implementation and limits](docs/CLOB_ENGINE.md).
 - [x] Core owner/canonical-nonce cancellation checks, duplicate rejection, expiry and reduce-only capacity checks. Reduce-only rejects absent/stale confirmed input. This is trusted internal command validation; cryptographic public admission remains separately pending.
 - [x] Aggregated depth, BBO, recent provisional trades and sequenced order/book/blocked-settlement events.
-- [x] Durable append-only hash-checked command journal, single-writer lock, fsync-before-ack and deterministic replay; refuse corruption, missing state, mismatched identity or unknown writes. Sixteen core/journal tests pass; no broadcast or settlement exists yet.
-- [ ] EIP-712 order/cancel admission bound to trader, chain and verifying contract; no request-supplied execution targets or private server signer.
+- [x] Durable append-only hash-checked command journal, single-writer lock, fsync-before-ack and deterministic replay; refuse corruption, missing state, mismatched identity or unknown writes. Sixteen core/journal tests pass; no onchain transaction broadcast or settlement exists yet.
+- [x] [EIP-712 order/cancel admission](docs/CLOB_ADMISSION.md) binds trader, Fuji/deployment, market, price/size, leverage, fee cap, flags, nonce and expiry; strict low-s EOA recovery, canonical hash IDs, durable proofs and cancel-target/replay checks. Signed in-process service ingress publishes only after fsync. Public network activation remains blocked by Phase 3; no address-only enable switch or private server signer.
 - [x] Loopback WebSocket snapshot/delta subscriptions, payload/client/backpressure limits and durable expiry ticks. [Service/reducer scope](docs/CLOB_SERVICE.md). HTTP mutation/admission remains 503 until genuine deployment/signature gates exist, not an unsigned fallback.
 - [x] Shared browser-safe client reducer detects sequence/stream gaps, freezes stale state and requests authoritative resynchronization. Actual existing-terminal wiring remains Phase 4.
-- [x] Thirty-one tests cover core FIFO/partials/cancel/expiry/nonces/reduce-only, journal corruption/restart/competing writers/identity mismatch, real loopback delivery/reconnect/gaps and bounded clients. Cryptographic forgery and signed-domain tests remain under the pending EIP-712 task; no signature-validation claim from owner-string checks.
+- [x] Forty-five CLOB tests cover core/journal/real loopback/reducer plus forgery, domain/financial-field tampering, low-s signatures, cancellation scope, async mutation and concurrent/restarted nonce replay. Four new Solidity auth tests include cross-language golden vectors and a 1,000-case signature-recovery property; hash helpers are not settlement.
 - [x] Benchmark pure matching, durable local acknowledgments and WebSocket delivery separately; publish [measured clean-revision quantiles/throughput/hardware/methodology](docs/CLOB_BENCHMARK.md), including the slower smoke-run caveat. Cryptographic HTTP admission, browser/WAN/fanout and onchain finality remain unmeasured; no public performance claim.
 
-**Gate:** reproducible local matcher/transport behavior. All matches remain provisional; no collateral, confirmed positions or onchain transactions are fabricated.
+**Local gate passed:** reproducible signed matcher/journal/transport behavior. All matches remain provisional; no collateral, confirmed positions or onchain transactions are fabricated. [Live-trading blocker review](docs/LIVE_TRADING_BLOCKERS.md): Phase 3, genuine deployment/readiness and downstream integration gates remain mandatory.
 
 ## Phase 3 — canonical collateral and signed atomic settlement (P0)
 

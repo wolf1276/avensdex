@@ -4,7 +4,7 @@
 
 `services/clob/market-data.ts` runs a real loopback HTTP/WebSocket server backed by the durable journal. `packages/clob/feed.ts` is a browser-safe reducer for the existing terminal. It is not a new terminal/demo page and is not yet wired into the archived NEAR frontend.
 
-The current executable is read-only: **all network writes return 503**, including unsigned orders, cancellation, positions and admin mutations. `/ready` is 503. There is no server signer, public transaction sender, PAPER mode or simulated execution fallback. Until genuine Fuji deployment validation, signed admission and settlement are implemented, an empty/unavailable market is shown honestly. Internal producer calls in automated tests/benchmarks use fixtures, not public liquidity or testnet receipts.
+The current executable is read-only: **all network writes return 503**, including unsigned orders, cancellation, positions and admin mutations. `/ready` is 503. There is no server signer, public transaction sender, PAPER mode or simulated execution fallback. Signed local admission is now [implemented and tested](CLOB_ADMISSION.md); until genuine Fuji deployment validation and settlement exist, the executable still shows an empty/unavailable market honestly. `applySigned` is trusted in-process ingress only, not a public API or activation bypass. Internal producer calls in automated tests/benchmarks use fixtures, not public liquidity or testnet receipts.
 
 The service remains centralized and single-host. It has no custody authority. Source NEAR programs and funded state are untouched.
 
@@ -53,6 +53,6 @@ npm run test:clob
 npm run bench:clob
 ```
 
-Thirty-one CLOB tests passed: 16 engine/journal, 6 reducer and 9 real service/CLI/backpressure cases. Coverage includes actual loopback sockets, snapshot/delta equality, dropped-message resync, reconnect, expiry, unsigned mutation refusal, origin/client/frame limits and shutdown/restart without journal loss. Tests do not sign or submit transactions.
+Forty-five CLOB tests passed: 16 engine/journal, 6 reducer, 12 signed-authorization and 11 real service/CLI/backpressure cases. Coverage includes actual loopback sockets, snapshot/delta equality, dropped-message resync, reconnect, expiry, unsigned mutation refusal, origin/client/frame limits and shutdown/restart without journal loss. Signature tests sign only publicly derived fixture-key typed messages with historical expiry, not live wallet authorizations or transactions. No transactions are submitted.
 
 The benchmark script reports core paired matching, 256-maker sweeps, fsync-backed local acknowledgments and loopback delivery separately, with quantiles/hardware/source hashes and explicit methodology limits. Its synthetic inputs are local measurement fixtures only. No matching, delivery, admission or chain-finality latency is inferred from unit-test duration. See [the measured local report](CLOB_BENCHMARK.md); signature/HTTP/WAN/finality/fanout performance remains unmeasured.
