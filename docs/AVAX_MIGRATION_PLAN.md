@@ -6,7 +6,7 @@ Status: M0 started with implemented read-only network checks and [recorded publi
 
 Avensdex will target Avalanche C-Chain Fuji (chain ID `43113`) first. Avalanche mainnet (chain ID `43114`) is explicitly disabled. AVAX is the native gas asset; wrapped AVAX, collateral and native gas must have separate balances and units.
 
-The repository is a planning scaffold, not an existing deployed exchange. Here, “migration” means qualifying the Avalanche target and implementing the proposed product on it. Porting legacy code, users or funded state is not assumed. If a legacy system is later identified, inventory its contracts, liabilities, permissions, licenses and chain dependencies before reusing anything. Funded-state migration requires a separate authorized reconciliation and cutover plan; never reset or silently transfer balances.
+The existing implementation has now been identified at `/home/ahir/Projects/near-hacks/NEARFlow`, including dirty/untracked source, the landing page and full terminal. [The source baseline](NEARFLOW_BASELINE.md) and [`todo.md`](../todo.md) supersede the former greenfield assumption and sequence in this scaffold. Follow the source's complete `migration.md` for behavioral parity and its current roadmap for pre-existing gaps. Reuse the existing UI, TypeScript funding/risk/economic code and protocol semantics; rewrite NEAR-specific custody, authority and transport for EVM. The local baseline is ignored until publication/rights review. Funded-state migration still requires separate authorized reconciliation and cutover; never reset or silently transfer balances.
 
 Initial scope:
 

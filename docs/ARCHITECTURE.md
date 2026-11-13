@@ -1,6 +1,8 @@
 # Avensdex architecture
 
-**Status: proposed design, not deployed infrastructure.**
+**Status: Avalanche target design for the existing NEARFlow protocol port, not deployed infrastructure.**
+
+Preserve the existing source architecture and terminal identified in [the baseline report](NEARFLOW_BASELINE.md). The source's complete `migration.md` defines the port; [`todo.md`](../todo.md) maps its M0–M8 sequence into six delivery phases. The component split below replaces NEAR chain boundaries, not the product's economic semantics.
 
 ## Product boundary
 

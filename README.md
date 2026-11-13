@@ -2,7 +2,7 @@
 
 **Adaptive perpetual trading on Avalanche.**
 
-Avensdex is a planned perpetual trading platform combining a matched exchange, adaptive funding and owner-controlled hedge strategies.
+Avensdex is the Avalanche port of the existing NEARFlow perpetual trading platform: matched exchange, adaptive funding, owner-controlled hedge strategies and the existing landing/trading UI.
 
 ## Product
 
@@ -17,7 +17,9 @@ Initial development targets Avalanche C-Chain Fuji. Mainnet execution is outside
 
 ## Status
 
-M0 qualification has started: read-only Fuji network and independent-provider block checks are implemented and tested. No application, contracts or public deployment are included yet. No live trading, yield or production-readiness claims are made.
+The complete NEARFlow working-source baseline has been copied locally and hash-verified. Its existing architecture, UI and migration plan are the implementation basis; follow [`todo.md`](todo.md) for the six phases and current tasks. See [baseline provenance and publication limits](docs/NEARFLOW_BASELINE.md).
+
+Read-only Fuji network and independent-provider block checks are implemented and tested. The EVM port is not complete; no Avalanche application, contracts or public deployment are claimed. No live trading, yield or production-readiness claims are made.
 
 ## Run qualification checks
 

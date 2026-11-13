@@ -1,5 +1,7 @@
 # Avensdex delivery roadmap
 
+The identified NEARFlow source already contains the UI and exchange. [`todo.md`](../todo.md) is now the active six-phase port task list, derived from the source's full migration plan. This page retains the original target gates; it is not an instruction to rebuild existing features.
+
 M0 qualification has started with tested read-only network probes; see [recorded evidence and blockers](FUJI_QUALIFICATION.md). All milestone gates remain incomplete. No public deployment or successful trading execution is implied by this checklist.
 
 The [Avalanche migration plan](AVAX_MIGRATION_PLAN.md) expands these milestones into qualification decisions, workstreams, acceptance gates and operating controls.

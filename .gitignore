@@ -24,3 +24,6 @@ __pycache__/
 # Local agent instructions and implementation notes (keep product docs tracked).
 [Aa][Gg][Ee][Nn][Tt][Ss].md
 [Ii][Mm][Pp][Ll][Ee][Mm][Ee][Nn][Tt][Aa][Tt][Ii][Oo][Nn].md
+
+# Local NEARFlow reference snapshot; includes unreviewed rights/evidence and instructions.
+/legacy/nearflow/
