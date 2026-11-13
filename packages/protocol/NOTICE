@@ -1,0 +1,5 @@
+Provenance: NEARFlow working-source snapshot in config/nearflow-source.json.
+accounting-vectors.json is retained unchanged from packages/sim/accounting-vectors.json.
+RiskMath.sol and math.ts preserve equations in contracts/exchange/src/math.rs and partial-close/fee rounding in trading.rs. AssetUnits.sol implements the reviewed size6-to-raw conversion for verified 6–24 decimal assets; WAVAX uses 18, not wNEAR's 24 decimals.
+
+No project-wide source license was supplied. Attribution does not grant third-party redistribution rights or change ownership.

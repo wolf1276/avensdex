@@ -9,5 +9,5 @@
     "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["packages/funding/preview.ts"]
+  "include": ["packages/funding/preview.ts", "packages/protocol/*.ts"]
 }
