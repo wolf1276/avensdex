@@ -1,6 +1,6 @@
-# CLOB benchmark — measured local results
+# CLOB benchmarks — measured local results
 
-**Not a Fuji execution, live-liquidity or end-to-end trading benchmark.** The sub-100 ms goal remains a target for the eventual authenticated product path; signatures, HTTP admission, contracts, WAN and finality were not measured here.
+**Not Fuji execution, live liquidity or end-to-end trading benchmarks.** The sub-100 ms goal remains a target for the eventual authenticated product path. HTTP admission, contracts, WAN and finality remain unmeasured. The original baseline excludes signatures; the Phase 2 checkpoint below adds separately measured signed in-process ingress.
 
 ## Reproduce
 
@@ -44,4 +44,26 @@ services/clob/market-data.ts      f01cb802c4a9bb6c31bbf63ce4dbcc93186bc28c50e1ee
 scripts/benchmark-clob.mjs        acdc6797b9bf019ded8251f675b0692e743141acc4c5199e07d0aa355878dcfe
 ```
 
-Raw generated output was reviewed but not committed indiscriminately. Public throughput/latency acceptance remains open until signed admission, real collateral settlement, confirmed positions and the existing terminal are integrated and measured separately.
+Raw generated output was reviewed but not committed indiscriminately. Public throughput/latency acceptance remains open until activated authenticated network admission, real collateral settlement, confirmed positions and the existing terminal are integrated and measured separately.
+
+## Phase 2 signed-ingress checkpoint
+
+Measured at **`2026-11-13T19:12:07.479Z`**, clean detached worktree of **`e09050a76cc8144fd880aa108685786d779535a4`**, `dirty:false`. Same Node/OS/CPU/RAM as above. That isolated worktree also passed `npm ci --ignore-scripts`, full `npm test` (45 CLOB / 19 Foundry tests), locked Rust reference tests (4) and Solidity format checks. An unrelated in-progress vault in the primary working tree was excluded/preserved, not tested or committed as Phase 2 work.
+
+| Workload | Samples | p50 ms | p95 ms | p99 ms | Max ms | Throughput |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Core paired commands | 2,048 | 0.270 | 0.511 | 0.831 | 1.329 | 3,579 commands/s |
+| 256-maker sweep command | 10 | 1.576 | 2.621 | 2.621 | 2.621 | 137,960 provisional fills/s, sweep time only |
+| Durable paired acknowledgment | 128 | 3.224 | 4.123 | 4.578 | 4.746 | 307 commands/s |
+| Durable → loopback final frame | 100 | 2.735 | 3.491 | 3.976 | 4.735 | 362 commands/s |
+| **Signed in-process authorization → fsync → loopback final frame** | **100** | **4.315** | **5.394** | **6.061** | **6.588** | **225 commands/s** |
+
+Existing workloads retain the methodology/limitations above. Signed workload uses a fresh fixture-bound journal and one subscriber, 50 submit/cancel pairs. Public fixture-key signatures are computed **outside** the measured interval; the interval includes schema/range checks, EIP-712 hashing/EOA recovery, cancel/nonce checks, journal proof append/fsync and reception of the final BBO sequence. Fixture expiry=2000 is historical, not a live chain authorization. Signed workload wall time: **444.686 ms**. The signed adapter is private in-process ingress; HTTP mutation/readiness remains 503. This does not demonstrate authenticated HTTP order latency, funded settlement or a functioning public market. Ten sweep samples still do not establish production tails.
+
+```text
+packages/clob/engine.ts           890e4906d5e4aa27f98d82a31ef2417a57f52c70c6db057aba52e6764726717d
+packages/clob/journal.ts          8dec572d8d2d963cda3f08cd76c38b54a09b0f2f459ca45f7ef3cbb90a6360f6
+packages/clob/admission.ts        163100c942fefcdc904c682160a910247e380852549a5e21a9b52df3fb30e355
+services/clob/market-data.ts      b04bf14c17f4db066e6d23d59ce94fc13ac3422c2221dece9a168943ef5e684e
+scripts/benchmark-clob.mjs        8b0504536592ccf744e64e3d9a0e852ecacb2d1b0571f05ee849428436283c34
+```

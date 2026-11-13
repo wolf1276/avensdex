@@ -33,4 +33,6 @@ Signature recovery happens on a private cloned envelope, preventing caller mutat
 
 Checks run: strict TS, **45 CLOB tests**, **19 Foundry tests** including the new 1,000-case recovery fuzz property, and full root tests. Twelve new authorization tests cover financial-field tampering, wrong owner/chain/deployment/name/version/market, strict signature encoding/malleability, expiry/flags/schema bounds, nonce restart/replay, cancellation scope, concurrency and async mutation. Two real service tests cover signed admission → fsync → WebSocket state plus refusal to activate HTTP trading or an unset domain.
 
-See [live-trading blockers](LIVE_TRADING_BLOCKERS.md), [market-data runtime](CLOB_SERVICE.md), [historical measured benchmark](CLOB_BENCHMARK.md) and [Fuji authorization prerequisites](FUJI_CLOB_RUNBOOK.md).
+Clean detached-worktree checks and [hosted CI for `e09050a`](https://github.com/wolf1276/avensdex/actions/runs/43489960005) passed. The [signed local benchmark checkpoint](CLOB_BENCHMARK.md#phase-2-signed-ingress-checkpoint) measures recovery + fsync + final-frame loopback delivery separately (100 samples, p99 6.061 ms); it excludes public HTTP admission, wallet signing, funded settlement, WAN and finality.
+
+See [live-trading blockers](LIVE_TRADING_BLOCKERS.md), [market-data runtime](CLOB_SERVICE.md) and [Fuji authorization prerequisites](FUJI_CLOB_RUNBOOK.md).
