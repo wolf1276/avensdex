@@ -5,9 +5,11 @@
     "moduleResolution": "NodeNext",
     "strict": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["packages/funding/preview.ts", "packages/protocol/*.ts"]
+  "include": ["packages/funding/preview.ts", "packages/protocol/*.ts", "packages/clob/*.ts"]
 }

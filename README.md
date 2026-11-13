@@ -19,7 +19,7 @@ Initial development targets Avalanche C-Chain Fuji. Mainnet execution is outside
 
 The complete NEARFlow working-source baseline has been copied locally and hash-verified. Its existing architecture, UI and migration plan are the implementation basis; follow [`todo.md`](todo.md) for the six phases and current tasks. See [baseline provenance and publication limits](docs/NEARFLOW_BASELINE.md).
 
-Read-only Fuji network checks, Solidity funding/units/risk math, typed module interfaces, an execution-disabled manifest parser and pinned CI are implemented. Local reference/property/parser checks pass; see [Phase 1 results and open gates](docs/PHASE1_STATUS.md). The full EVM port is not complete; no deployed Avalanche application or public contract execution is claimed. No live trading, yield or production-readiness claims are made.
+A [deterministic offchain CLOB and crash-safe command journal](docs/CLOB_ENGINE.md), read-only Fuji network checks, Solidity funding/units/risk math, typed module interfaces, an execution-disabled manifest parser and pinned CI are implemented. Local reference/property/parser checks pass; see [Phase 1 results and open gates](docs/PHASE1_STATUS.md). The full EVM port is not complete: signed public admission, WebSocket/terminal wiring, collateral/settlement contracts and live Guardian/Autopilot execution are pending. All matches are provisional/blocked, never confirmed positions. No deployed Avalanche application or public contract execution is claimed. No live trading, yield or production-readiness claims are made.
 
 ## Run local foundation checks
 
@@ -41,6 +41,6 @@ python3 scripts/qualify_fuji.py
 python3 -m scripts.compare_fuji_rpcs
 ```
 
-The network probes are read-only. Mainnet and transaction execution remain disabled.
+The network probes are read-only. Mainnet and transaction execution remain disabled. The active product is Fuji-only with no PAPER/simulated-execution fallback; local unit/fuzz/benchmark fixtures are development tests only.
 
 See [Fuji qualification evidence and blockers](docs/FUJI_QUALIFICATION.md), the [Avalanche migration plan](docs/AVAX_MIGRATION_PLAN.md), [Architecture](docs/ARCHITECTURE.md) and [Roadmap](docs/ROADMAP.md).

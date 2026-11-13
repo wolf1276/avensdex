@@ -23,10 +23,10 @@ Evidence: [foundation checks](docs/FOUNDATION_CHECKS.md), [Phase 1 scope](docs/P
 
 ## Phase 2 — deterministic offchain matching and market data (P0)
 
-- [ ] One bounded TypeScript in-memory CLOB; limit and price-bounded IOC market orders; buy/sell, price-time/FIFO, multiple orders per level, partials and self-trade prevention.
-- [ ] Owner cancellation, monotonic order nonces/duplicate rejection, explicit expiry and reduce-only capacity checks. Keep reduce-only admission disabled without confirmed position state.
-- [ ] Aggregated depth, BBO, recent provisional trades and sequenced order/book/blocked-settlement events.
-- [ ] Durable append-only hash-checked command journal, single-writer lock, fsync-before-ack and deterministic replay; refuse corruption, missing state, mismatched identity or unknown writes.
+- [x] One bounded TypeScript in-memory CLOB; limit and price-bounded IOC market orders; buy/sell, price-time/FIFO, multiple orders per level, partials and self-trade prevention. [Core/journal implementation and limits](docs/CLOB_ENGINE.md).
+- [x] Core owner/canonical-nonce cancellation checks, duplicate rejection, expiry and reduce-only capacity checks. Reduce-only rejects absent/stale confirmed input. This is trusted internal command validation; cryptographic public admission remains separately pending.
+- [x] Aggregated depth, BBO, recent provisional trades and sequenced order/book/blocked-settlement events.
+- [x] Durable append-only hash-checked command journal, single-writer lock, fsync-before-ack and deterministic replay; refuse corruption, missing state, mismatched identity or unknown writes. Sixteen core/journal tests pass; no broadcast or settlement exists yet.
 - [ ] EIP-712 order/cancel admission bound to trader, chain and verifying contract; no request-supplied execution targets or private server signer.
 - [ ] Loopback WebSocket snapshot/delta subscriptions and bounded HTTP admission; payload/client/backpressure limits and expiry ticks.
 - [ ] Shared client state reducer detects sequence/stream gaps and resynchronizes from authoritative snapshots.
