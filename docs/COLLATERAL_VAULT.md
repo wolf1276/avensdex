@@ -33,6 +33,6 @@ forge test --root contracts/evm --match-path test/AvensVault.t.sol
 npm test
 ```
 
-The custody adversarial tests were drafted by OpenCode against a separately implemented vault and reviewed/integrated by the Pi agent. Integration strengthened reentrancy assertions and added two-owner conservation and sender-surcharge checks. All 24 custody tests pass, including two 1,000-run fuzz properties. Full `npm test` passes: typecheck, 61 TypeScript tests, 11 Python tests and 43 Foundry tests. `forge fmt --check` passes for the two new Solidity files. Optimized runtime is 3,477 bytes with the pinned Solidity 0.8.30/Paris configuration; a local gas report is not public transaction-cost evidence.
+The custody adversarial tests were drafted by OpenCode against a separately implemented vault and reviewed/integrated by the Pi agent. Integration strengthened reentrancy assertions and added two-owner conservation and sender-surcharge checks. All 24 custody tests pass, including two 1,000-run fuzz properties. Full `npm test` passes: typecheck, 61 TypeScript tests, 12 Python tests and 43 Foundry tests. `forge fmt --check` passes for the two new Solidity files. Optimized runtime is 3,477 bytes with the pinned Solidity 0.8.30/Paris configuration; a local gas report is not public transaction-cost evidence.
 
 Tests use local malicious-token fixtures only; they are not token qualification, fork evidence or public Fuji receipts. No browser flow, public deployment/signing, external token behavior or completed settlement lifecycle was verified.
