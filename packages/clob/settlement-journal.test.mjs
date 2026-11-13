@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { SettlementJournal, MATCHED_FILL_SIGNATURE, MATCHED_FILL_EVENT } from './settlement-journal.ts';
+import { digest } from './journal.ts';
 
 const hex32 = c => `0x${c.repeat(64)}`, addr = c => `0x${c.repeat(40)}`;
 const identity = { chainId: 43113, deploymentId: hex32('d'), settlementContract: addr('a') };
@@ -19,7 +20,7 @@ const fillLog = (order, changes = {}) => ({ contract: identity.settlementContrac
 function successReceipt(order, options = {}) {
   const tx = options.txHash ?? txHash, number = options.blockNumber ?? '5', hash = options.blockHash ?? blockHash;
   const logs = options.logs ?? [fillLog(order, { txHash: tx, blockNumber: number, blockHash: hash })];
-  return { txHash: tx, status: 'success', blockNumber: number, blockHash: hash, logs };
+  return { txHash: tx, status: 'success', blockNumber: number, blockHash: hash, sender: order.sender, nonce: order.nonce, logs };
 }
 // Deterministic local-only reader mock. No RPC, fixture, signing or broadcast is involved.
 function localMockReader(initial = {}) {
@@ -485,4 +486,32 @@ test('an uncertain startup reconciliation checkpoint retains the crash lock', as
   assert.equal(child.status, 0, child.stderr);
   assert(existsSync(join(dir, 'writer.lock')));
   assert.throws(() => open(dir, reader), /EEXIST/);
+});
+
+
+test('another sender or transport nonce cannot satisfy an intent even with the expected fill log', async t => {
+  for (const mismatch of [{ sender: addr('9') }, { nonce: '8' }]) {
+    const i = intent(), receipt = { ...successReceipt(i), ...mismatch };
+    const reader = localMockReader({ receipt }), j = open(directory(t), reader);
+    const r = j.recordIntent(i);
+    j.recordBroadcast(r.intentId, { txHash, sender, nonce: '7' });
+    const result = await j.reconcile(r.intentId);
+    assert.equal(result.status, 'unknown');
+    assert.equal(result.reason, 'INVALID_RECEIPT');
+    assert.deepEqual(j.confirmedFills(), []);
+    j.close();
+  }
+});
+
+test('old settlement journals without transaction sender/nonce proof are refused without reset', t => {
+  const dir = directory(t), reader = localMockReader(), j = open(dir, reader);
+  j.close();
+  const path = join(dir, 'settlements.jsonl'), header = JSON.parse(readFileSync(path, 'utf8'));
+  header.event.engineVersion = 1;
+  const { digest: ignored, ...body } = header;
+  header.digest = digest(body);
+  writeFileSync(path, JSON.stringify(header) + '\n');
+  const before = readFileSync(path);
+  assert.throws(() => open(dir, reader), /IDENTITY_MISMATCH/);
+  assert.deepEqual(readFileSync(path), before);
 });

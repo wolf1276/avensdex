@@ -64,6 +64,12 @@ export async function createSettlementReader(receiptClient: PublicClient, canoni
       if (!['success', 'reverted'].includes(receipt.status) || receipt.to?.toLowerCase() !== address) {
         throw Error('SETTLEMENT_RPC_RECEIPT_TARGET');
       }
+      const transaction = await receiptClient.getTransaction({ hash: txHash });
+      const sender = receipt.from.toLowerCase();
+      if (hash(transaction.hash) !== txHash || transaction.from.toLowerCase() !== sender
+        || transaction.to?.toLowerCase() !== address || !Number.isSafeInteger(transaction.nonce)
+        || transaction.nonce < 0) throw Error('SETTLEMENT_RPC_TRANSACTION_IDENTITY');
+      const nonce = String(transaction.nonce);
       const logs = [];
       for (const log of receipt.logs) {
         if (log.address.toLowerCase() !== address || log.topics[0]?.toLowerCase() !== eventTopic) continue;
@@ -76,7 +82,7 @@ export async function createSettlementReader(receiptClient: PublicClient, canoni
           size6: decoded.args.size6.toString(), price18: decoded.args.price18.toString(), txHash,
           blockNumber, blockHash, logIndex: log.logIndex });
       }
-      return { txHash, status: receipt.status, blockNumber, blockHash, logs };
+      return { txHash, status: receipt.status, blockNumber, blockHash, sender, nonce, logs };
     },
     async getCanonicalHead() {
       await verify(canonicalClient);

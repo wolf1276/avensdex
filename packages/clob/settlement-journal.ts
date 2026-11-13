@@ -25,7 +25,7 @@ export interface SettlementIntent extends SettlementIntentInput {
   version: 1; chainId: SettlementChainId; deploymentId: string; settlementContract: string; intentId: string;
 }
 export interface BroadcastIdentity { txHash: string; sender: string; nonce: string }
-export interface ReceiptIdentity { txHash: string; status: 'success' | 'reverted'; blockNumber: string; blockHash: string }
+export interface ReceiptIdentity { txHash: string; status: 'success' | 'reverted'; blockNumber: string; blockHash: string; sender: string; nonce: string }
 export interface SettlementEvent {
   contract: string; pairId: string; longOrderHash: string; shortOrderHash: string; size6: string; price18: string;
   txHash: string; blockNumber: string; blockHash: string; logIndex: number;
@@ -116,9 +116,10 @@ function checkBroadcast(input: unknown): BroadcastIdentity {
   return { txHash: hash32(input.txHash), sender: address(input.sender), nonce: quantity(input.nonce, 64, true) };
 }
 function checkReceiptIdentity(input: unknown): ReceiptIdentity {
-  exact(input, ['txHash', 'status', 'blockNumber', 'blockHash']);
+  exact(input, ['txHash', 'status', 'blockNumber', 'blockHash', 'sender', 'nonce']);
   if (input.status !== 'success' && input.status !== 'reverted') throw Error('INVALID_SETTLEMENT_RECEIPT_STATUS');
-  return { txHash: hash32(input.txHash), status: input.status, blockNumber: quantity(input.blockNumber, 64, true), blockHash: hash32(input.blockHash) };
+  return { txHash: hash32(input.txHash), status: input.status, blockNumber: quantity(input.blockNumber, 64, true),
+    blockHash: hash32(input.blockHash), sender: address(input.sender), nonce: quantity(input.nonce, 64, true) };
 }
 function checkEvent(input: unknown): SettlementEvent {
   exact(input, ['contract', 'pairId', 'longOrderHash', 'shortOrderHash', 'size6', 'price18', 'txHash', 'blockNumber', 'blockHash', 'logIndex']);
@@ -138,7 +139,7 @@ function matchesEvent(identity: SettlementIdentity, intent: SettlementIntent, re
 }
 
 type JournalEvent =
-  | { type: 'header'; engineVersion: 1; identity: SettlementIdentity; confirmations: number }
+  | { type: 'header'; engineVersion: 2; identity: SettlementIdentity; confirmations: number }
   | { type: 'intent'; intent: SettlementIntent }
   | { type: 'broadcast'; intentId: string; broadcast: BroadcastIdentity; replacement: boolean }
   | { type: 'transition'; intentId: string; status: Exclude<SettlementStatus, 'intent' | 'broadcast'>;
@@ -164,6 +165,7 @@ function transitionEvent(input: unknown, identity: SettlementIdentity, policy: n
     || !transitionAllowed(from, status as SettlementStatus)) throw Error('SETTLEMENT_TRANSITION_ORDER');
   const parsedReason = reason(input.reason);
   const receipt = input.receipt === null ? null : checkReceiptIdentity(input.receipt);
+  if (receipt && (receipt.sender !== intent.sender || receipt.nonce !== intent.nonce)) throw Error('SETTLEMENT_RECEIPT_SENDER_NONCE_MISMATCH');
   const event = input.event === null ? null : checkEvent(input.event);
   const confirmations = input.confirmations === null ? null : integer(input.confirmations, 0, Number.MAX_SAFE_INTEGER);
   if (status === 'confirmed') {
@@ -271,9 +273,11 @@ async function fetched(call: () => Promise<unknown>): Promise<Fetched> {
     return { ok: true, value: value === null || value === undefined ? value : structuredClone(value) };
   } catch { return { ok: false }; }
 }
-interface ParsedReceipt { txHash: string; status: 'success' | 'reverted'; blockNumber: string; blockHash: string; logs: SettlementEvent[] }
-function checkReceipt(input: unknown, txHash: string): ParsedReceipt {
-  exact(input, ['txHash', 'status', 'blockNumber', 'blockHash', 'logs']);
+interface ParsedReceipt extends ReceiptIdentity { logs: SettlementEvent[] }
+function checkReceipt(input: unknown, txHash: string, intent: SettlementIntent): ParsedReceipt {
+  exact(input, ['txHash', 'status', 'blockNumber', 'blockHash', 'sender', 'nonce', 'logs']);
+  const sender = address(input.sender), nonce = quantity(input.nonce, 64, true);
+  if (sender !== intent.sender || nonce !== intent.nonce) throw Error('SETTLEMENT_RECEIPT_SENDER_NONCE_MISMATCH');
   if (input.txHash !== txHash) throw Error('SETTLEMENT_RECEIPT_TX_MISMATCH');
   if (input.status !== 'success' && input.status !== 'reverted') throw Error('INVALID_SETTLEMENT_RECEIPT_STATUS');
   const blockNumber = quantity(input.blockNumber, 64, true);
@@ -286,7 +290,7 @@ function checkReceipt(input: unknown, txHash: string): ParsedReceipt {
     }
     return event;
   });
-  return { txHash, status: input.status, blockNumber, blockHash, logs };
+  return { txHash, status: input.status, blockNumber, blockHash, sender, nonce, logs };
 }
 function checkHead(input: unknown) {
   exact(input, ['number', 'hash']);
@@ -329,7 +333,7 @@ export class SettlementJournal {
       if (!existsSync(path)) {
         if (!create) throw Error('SETTLEMENT_JOURNAL_MISSING_REFUSE_RESET');
         fd = openSync(path, 'ax', 0o600);
-        const header = { type: 'header' as const, engineVersion: 1 as const, identity, confirmations };
+        const header = { type: 'header' as const, engineVersion: 2 as const, identity, confirmations };
         const body = { version: 1, index: 0, previous: '0'.repeat(64), event: header };
         append(fd, Buffer.from(encode({ ...body, digest: digest(body) }) + '\n'));
         const dir = openSync(directory, 'r'); try { fsyncSync(dir); } finally { closeSync(dir); }
@@ -349,7 +353,7 @@ export class SettlementJournal {
         }
         if (i === 0) {
           exact(record.event, ['type', 'engineVersion', 'identity', 'confirmations']);
-          if (record.event.type !== 'header' || record.event.engineVersion !== 1) throw Error('SETTLEMENT_JOURNAL_IDENTITY_MISMATCH');
+          if (record.event.type !== 'header' || record.event.engineVersion !== 2) throw Error('SETTLEMENT_JOURNAL_IDENTITY_MISMATCH');
           const headerIdentity = checkedIdentity(record.event.identity);
           if (encode(headerIdentity) !== encode(identity) || record.event.confirmations !== confirmations) {
             throw Error('SETTLEMENT_JOURNAL_IDENTITY_MISMATCH');
@@ -505,10 +509,11 @@ export class SettlementJournal {
       return this.#transition(intentId, 'unknown', unavailable ? 'RECEIPT_UNAVAILABLE' : 'RECEIPT_NOT_FOUND', null, null, null);
     }
     let receipt: ParsedReceipt;
-    try { receipt = checkReceipt(receiptRaw.value, expected.txHash); }
+    try { receipt = checkReceipt(receiptRaw.value, expected.txHash, expected.intent); }
     catch { return this.#transition(intentId, 'unknown', 'INVALID_RECEIPT', null, null, null); }
     const receiptIdentity: ReceiptIdentity = {
       txHash: receipt.txHash, status: receipt.status, blockNumber: receipt.blockNumber, blockHash: receipt.blockHash,
+      sender: receipt.sender, nonce: receipt.nonce,
     };
     const headRaw = await fetched(() => reader.getCanonicalHead());
     if (!unchanged()) throw Error('SETTLEMENT_RECONCILE_RACE');

@@ -7,14 +7,17 @@ import { MATCHED_FILL_EVENT } from './settlement-journal.ts';
 const h = x => `0x${x.repeat(64)}`;
 const identity = { chainId: 31337, deploymentId: h('1'), settlementContract: `0x${'a'.repeat(40)}` };
 const txHash = h('2'), blockHash = h('3'), longOrderHash = h('4'), shortOrderHash = h('5');
+const sender = `0x${'d'.repeat(40)}`;
 function fixture() {
   const state = { chainId: 31337, code: '0x1234', deploymentId: h('1'), missing: false };
   const log = { address: identity.settlementContract, data: encodeAbiParameters([{ type: 'uint128' }, { type: 'uint128' }], [1_000_000n, 100n * 10n ** 18n]),
     topics: encodeEventTopics({ abi: [MATCHED_FILL_EVENT], eventName: 'MatchedFill', args: { pairId: 1n, longOrderHash, shortOrderHash } }),
     removed: false, logIndex: 1, transactionHash: txHash, blockHash, blockNumber: 10n };
-  state.receipt = { transactionHash: txHash, blockHash, blockNumber: 10n, to: identity.settlementContract, status: 'success', logs: [log] };
+  state.receipt = { transactionHash: txHash, blockHash, blockNumber: 10n, from: sender,
+    to: identity.settlementContract, status: 'success', logs: [log] };
   const client = {
     getChainId: async () => state.chainId, getCode: async () => state.code, readContract: async () => state.deploymentId,
+    getTransaction: async () => ({ hash: txHash, from: sender, to: identity.settlementContract, nonce: 0 }),
     getTransactionReceipt: async () => {
       if (state.missing) throw new TransactionReceiptNotFoundError({ hash: txHash });
       return structuredClone(state.receipt);
@@ -30,6 +33,8 @@ test('RPC adapter decodes actual ABI bytes and returns only bound settlement eve
   const reader = await createSettlementReader(client, client, identity);
   const receipt = await reader.getReceipt(txHash);
   assert.equal(receipt.txHash, txHash);
+  assert.equal(receipt.sender, sender);
+  assert.equal(receipt.nonce, '0');
   assert.equal(receipt.logs.length, 1);
   assert.deepEqual(receipt.logs[0], { contract: identity.settlementContract, pairId: '1', longOrderHash, shortOrderHash,
     size6: '1000000', price18: '100000000000000000000', txHash, blockNumber: '10', blockHash, logIndex: 1 });
@@ -140,4 +145,12 @@ test('position readers reject incoherent ledger state and reorg during pinned re
   let reads = 0;
   client.getBlock = async ({ blockNumber }) => ({ number: blockNumber ?? 12n, hash: ++reads >= 4 ? h('6') : blockHash });
   await assert.rejects(readCanonicalPosition(client, client, identity, '1'), /POSITION_BLOCK_REORGED/);
+});
+
+
+test('receipt confirmation verifies immutable transaction sender and transport nonce, not only fill logs', async () => {
+  const { client } = fixture();
+  const reader = await createSettlementReader(client, client, identity);
+  client.getTransaction = async () => ({ hash: txHash, from: `0x${'e'.repeat(40)}`, to: identity.settlementContract, nonce: 0 });
+  await assert.rejects(reader.getReceipt(txHash), /TRANSACTION_IDENTITY/);
 });
