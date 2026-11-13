@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { encodeAbiParameters, encodeEventTopics, TransactionReceiptNotFoundError } from 'viem';
-import { createSettlementReader } from './settlement-reader.ts';
+import { createSettlementReader, readCanonicalPosition } from './settlement-reader.ts';
 import { MATCHED_FILL_EVENT } from './settlement-journal.ts';
 
 const h = x => `0x${x.repeat(64)}`;
@@ -92,4 +92,52 @@ test('reader pins immutable input and rejects canonical provider disagreement', 
   client.getBlock = async () => ({ number: 9n, hash: blockHash });
   await assert.rejects(reader.getCanonicalBlockHash('10'), /BLOCK_MISMATCH/);
   await assert.rejects(createSettlementReader(client, client, { ...identity, chainId: 1 }), /IDENTITY/);
+});
+
+
+function positionFixture() {
+  const f = fixture(), calls = [];
+  const state = { used: true, size: 1_000_000n, closed: false };
+  f.client.readContract = async request => {
+    calls.push(request);
+    switch (request.functionName) {
+      case 'deploymentId': return identity.deploymentId;
+      case 'vault': return `0x${'c'.repeat(40)}`;
+      case 'settlementModule': return identity.settlementContract;
+      case 'usedPairIds': return state.used;
+      case 'pairs': return [state.size, state.closed ? 0n : 100n * 10n ** 18n, 0n, 0n, longOrderHash, shortOrderHash];
+      case 'pairMargins': return { longOwner: `0x${(state.closed ? '0' : 'd').repeat(40)}`,
+        shortOwner: `0x${(state.closed ? '0' : 'e').repeat(40)}`, longMargin6: state.closed ? 0n : 10_000_000n,
+        shortMargin6: state.closed ? 0n : 10_000_000n };
+      default: throw Error('unexpected read');
+    }
+  };
+  return { ...f, state, calls };
+}
+
+test('current positions use canonical contract metadata and vault margins at one pinned block', async () => {
+  const { client, calls, state } = positionFixture();
+  const position = await readCanonicalPosition(client, client, identity, '1');
+  assert.equal(position.closed, false);
+  assert.equal(position.blockNumber, '12');
+  assert.equal(position.size6, '1000000');
+  assert.equal(position.longMargin6, '10000000');
+  assert(calls.filter(call => call.functionName !== 'deploymentId').every(call => call.blockNumber === 12n));
+  state.size = 0n; state.closed = true;
+  const closed = await readCanonicalPosition(client, client, identity, '1');
+  assert.equal(closed.closed, true);
+  assert.equal(closed.longMargin6, '0');
+  state.used = false;
+  await assert.rejects(readCanonicalPosition(client, client, identity, '1'), /UNKNOWN_CANONICAL_POSITION/);
+  await assert.rejects(readCanonicalPosition(client, client, identity, '0'), /INVALID_POSITION_ID/);
+});
+
+test('position readers reject incoherent ledger state and reorg during pinned reads', async () => {
+  const { client, state } = positionFixture();
+  state.closed = true; // Active metadata with missing margin owners is inconsistent, not an empty position.
+  await assert.rejects(readCanonicalPosition(client, client, identity, '1'), /LEDGER_MISMATCH/);
+  state.closed = false;
+  let reads = 0;
+  client.getBlock = async ({ blockNumber }) => ({ number: blockNumber ?? 12n, hash: ++reads >= 4 ? h('6') : blockHash });
+  await assert.rejects(readCanonicalPosition(client, client, identity, '1'), /POSITION_BLOCK_REORGED/);
 });

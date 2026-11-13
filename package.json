@@ -18,7 +18,8 @@
     "bench:clob": "node --experimental-strip-types scripts/benchmark-clob.mjs",
     "test:network": "python3 -m unittest discover -s scripts -t . -v",
     "test:contracts": "forge test --root contracts/evm",
-    "test": "npm run typecheck && npm run test:funding && npm run test:protocol && npm run test:clob && npm run test:network && npm run test:contracts"
+    "test:settlement:evm": "node --experimental-strip-types scripts/test-local-settlement.mjs",
+    "test": "npm run typecheck && npm run test:funding && npm run test:protocol && npm run test:clob && npm run test:network && npm run test:contracts && npm run test:settlement:evm"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

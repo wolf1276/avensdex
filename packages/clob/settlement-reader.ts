@@ -3,6 +3,20 @@ import { MATCHED_FILL_EVENT, MATCHED_FILL_SIGNATURE, type ReceiptReader, type Se
 
 const identityAbi = [{ type: 'function', name: 'deploymentId', stateMutability: 'view', inputs: [],
   outputs: [{ name: '', type: 'bytes32' }] }] as const;
+const positionAbi = [
+  { type: 'function', name: 'vault', stateMutability: 'view', inputs: [], outputs: [{ type: 'address' }] },
+  { type: 'function', name: 'pairs', stateMutability: 'view', inputs: [{ type: 'uint64' }], outputs: [
+    { type: 'uint128' }, { type: 'uint128' }, { type: 'int128' }, { type: 'int128' }, { type: 'bytes32' }, { type: 'bytes32' },
+  ] },
+] as const;
+const vaultAbi = [...identityAbi,
+  { type: 'function', name: 'settlementModule', stateMutability: 'view', inputs: [], outputs: [{ type: 'address' }] },
+  { type: 'function', name: 'usedPairIds', stateMutability: 'view', inputs: [{ type: 'uint64' }], outputs: [{ type: 'bool' }] },
+  { type: 'function', name: 'pairMargins', stateMutability: 'view', inputs: [{ type: 'uint64' }], outputs: [{ type: 'tuple', components: [
+    { name: 'longOwner', type: 'address' }, { name: 'shortOwner', type: 'address' },
+    { name: 'longMargin6', type: 'uint128' }, { name: 'shortMargin6', type: 'uint128' },
+  ] }] },
+] as const;
 const eventTopic = toEventSelector(MATCHED_FILL_SIGNATURE);
 const hash = (value: unknown): Hex => {
   if (typeof value !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(value) || /^0x0+$/.test(value)) throw Error('INVALID_RPC_HASH');
@@ -70,11 +84,55 @@ export async function createSettlementReader(receiptClient: PublicClient, canoni
       return { number: number(block.number), hash: hash(block.hash) };
     },
     async getCanonicalBlockHash(blockNumber: string) {
-      if (!/^(0|[1-9][0-9]*)$/.test(blockNumber) || BigInt(blockNumber) > (1n << 64n) - 1n) throw Error('INVALID_READER_BLOCK');
+      if (typeof blockNumber !== 'string' || blockNumber.length > 20 || !/^(0|[1-9][0-9]*)$/.test(blockNumber)
+        || BigInt(blockNumber) > (1n << 64n) - 1n) throw Error('INVALID_READER_BLOCK');
       await verify(canonicalClient);
       const block = await canonicalClient.getBlock({ blockNumber: BigInt(blockNumber) });
       if (number(block.number) !== blockNumber) throw Error('SETTLEMENT_RPC_BLOCK_MISMATCH');
       return hash(block.hash);
     },
   });
+}
+
+
+/** Current position state is read from both canonical modules at one pinned block, never from matcher fills. */
+export async function readCanonicalPosition(receiptClient: PublicClient, canonicalClient: PublicClient,
+  input: SettlementIdentity, pairId: string) {
+  if (typeof pairId !== 'string' || pairId.length > 20 || !/^[1-9][0-9]*$/.test(pairId)
+    || BigInt(pairId) > (1n << 64n) - 1n) throw Error('INVALID_POSITION_ID');
+  const identity = Object.freeze(structuredClone(input));
+  const reader = await createSettlementReader(receiptClient, canonicalClient, identity);
+  const head = await reader.getCanonicalHead() as { number: string; hash: string };
+  const blockNumber = BigInt(head.number), address = identity.settlementContract as Hex;
+  async function coherentBlock() {
+    const receiptBlock = await receiptClient.getBlock({ blockNumber });
+    if (number(receiptBlock.number) !== head.number || hash(receiptBlock.hash) !== head.hash
+      || await reader.getCanonicalBlockHash(head.number) !== head.hash) throw Error('POSITION_BLOCK_REORGED');
+  }
+  await coherentBlock();
+  const vault = await receiptClient.readContract({ address, abi: positionAbi, functionName: 'vault', blockNumber });
+  if (/^0x0+$/.test(vault) || vault.toLowerCase() === address) throw Error('POSITION_VAULT_IDENTITY');
+  const id = await receiptClient.readContract({ address: vault, abi: vaultAbi, functionName: 'deploymentId', blockNumber });
+  const module = await receiptClient.readContract({ address: vault, abi: vaultAbi, functionName: 'settlementModule', blockNumber });
+  if (hash(id) !== hash(identity.deploymentId) || module.toLowerCase() !== address) throw Error('POSITION_VAULT_IDENTITY');
+  const args = [BigInt(pairId)] as const;
+  if (!await receiptClient.readContract({ address: vault, abi: vaultAbi, functionName: 'usedPairIds', args, blockNumber })) {
+    throw Error('UNKNOWN_CANONICAL_POSITION');
+  }
+  const [size6, entryPrice18, lastFundingIndex18, fundingRemainder, longHash, shortHash] =
+    await receiptClient.readContract({ address, abi: positionAbi, functionName: 'pairs', args, blockNumber });
+  const margins = await receiptClient.readContract({ address: vault, abi: vaultAbi, functionName: 'pairMargins', args, blockNumber });
+  const closed = size6 === 0n, zeroOwner = '0x' + '0'.repeat(40);
+  if (closed) {
+    if (margins.longOwner !== zeroOwner || margins.shortOwner !== zeroOwner || margins.longMargin6 !== 0n
+      || margins.shortMargin6 !== 0n) throw Error('POSITION_LEDGER_MISMATCH');
+  } else if (size6 > 10n ** 15n || entryPrice18 <= 0n || entryPrice18 > 10n ** 27n
+    || margins.longOwner === zeroOwner || margins.shortOwner === zeroOwner || margins.longOwner === margins.shortOwner
+    || margins.longMargin6 + margins.shortMargin6 <= 0n) throw Error('POSITION_LEDGER_MISMATCH');
+  await coherentBlock();
+  return Object.freeze({ ...identity, pairId, blockNumber: head.number, blockHash: head.hash, closed,
+    size6: size6.toString(), entryPrice18: entryPrice18.toString(), lastFundingIndex18: lastFundingIndex18.toString(),
+    fundingRemainder: fundingRemainder.toString(), longOrderHash: longHash.toLowerCase(), shortOrderHash: shortHash.toLowerCase(),
+    longOwner: margins.longOwner.toLowerCase(), shortOwner: margins.shortOwner.toLowerCase(),
+    longMargin6: margins.longMargin6.toString(), shortMargin6: margins.shortMargin6.toString() });
 }
