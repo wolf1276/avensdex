@@ -2,7 +2,9 @@
 
 **CLOB design update:** [the current plan](CLOB_PLAN.md) supersedes this initial onchain-book placement/matching API for the new execution path. These v1 interfaces remain reference specifications, not deployed settlement. Canonical custody, fixed-owner payouts, scoped authority and nonce/conservation invariants still apply. The signed-fill settlement ABI must be separately specified/implemented/tested before admission or settlement activation.
 
-Status: frozen **initial interface specification**, compiled with Solidity 0.8.30. No vault/exchange/executor/oracle/reader implementations or deployed authorization are claimed. Changes to these boundaries require a reviewed spec/ABI change and updated tests, not silent reinterpretation. Current definitions are in `contracts/evm/src/interfaces/`.
+Status: frozen **initial interface specification**, compiled with Solidity 0.8.30. No implementations of these v1 interfaces or deployed authorization are claimed. Changes to these boundaries require a reviewed spec/ABI change and updated tests, not silent reinterpretation. Current definitions are in `contracts/evm/src/interfaces/`.
+
+**Implemented custody slice:** [AvensVault](COLLATERAL_VAULT.md) provides local-only manual free balances and fixed-owner payouts. It deliberately does not implement the v1 ABI below, settlement/module authority, strategy books or public activation. Fuji deposits cannot activate in this version. Remaining bucket/authority rules here are target requirements, not completed implementations.
 
 ## Identity, units and books
 

@@ -1,13 +1,13 @@
-# Live-trading blockers — Phase 2 checkpoint
+# Live-trading blockers — Phase 2 checkpoint and partial custody update
 
 **Decision: NOT READY. Keep public trading/settlement and Autopilot disabled.** Phase 2 local signed matching/data delivery is implemented; none of its provisional events establish collateral, positions, liquidity or a public fill.
 
 ## Checked at the Phase 2 checkpoint
 
-Signed implementation basis: `e09050a`, plus the response-time RPC freshness fix described below. This report does not claim completion of subsequent Phase 3 work.
+Signed implementation basis: `e09050a`, plus the response-time RPC freshness fix described below. Subsequent custody slice `799d668` is linked below; the complete Phase 3 gate remains open.
 
 - `config/fuji.json`: Fuji `43113`, `executionEnabled:false`, `mainnetEnabled:false`, no deployed module/asset/oracle addresses. The current manifest parser rejects execution-enabled configurations.
-- Solidity source: interfaces and pure math/authentication libraries only. No implemented canonical vault, stateful exchange/settlement, funding controller or strategy executor. The new hash/recovery library is not a settlement shortcut.
+- Solidity source now includes the [local-only custody slice](COLLATERAL_VAULT.md): exact-delta free balances and owner withdrawals, with Fuji activation hard-disabled. Its 24 custody tests pass, including an independent rerun. Full escrow/margin/insurance/strategy buckets, stateful exchange/settlement, funding controller and strategy executor remain unimplemented. Hash/recovery helpers are not settlement shortcuts.
 - Executable journal binding: settlement contract unset. HTTP writes and `/ready` return 503; signed in-process authorization cannot turn on those endpoints. Tests verify both null and nonzero fixture bindings remain network-write-disabled.
 - Real public, **read-only** RPC observation at `2026-11-13T19:15:33.492053+00:00`: both fixed providers agreed on Fuji block **61019217**, hash **`0x2c856e6ac3410e78d0e0fa4182fd2e198e2ec9f979796d9fce77909fe0c99e5e`**, timestamp **1794597326**; heads **61019219/61019221**. This is identity/same-height agreement, not finality or application readiness. During the review, probes failed closed with a freshness error. A reproduced timing bug sampled the wall clock before RPCs completed, falsely rejecting heads produced in flight; the corrected probe samples after each response. A regression failed before the fix and all 12 Python tests pass afterward. This does not prove every earlier failure had that cause or establish stable provider availability.
 - No public deployment, public wallet signing, token movement or gas expenditure. Local signatures and synthetic addresses are test fixtures only. Earlier USDC metadata observations were not rerun as a full asset qualification and do not enable collateral.
@@ -16,7 +16,7 @@ Signed implementation basis: `e09050a`, plus the response-time RPC freshness fix
 
 | Blocker | Required closure |
 | --- | --- |
-| **No canonical custody implementation** | Exact token deltas, capped deposits, single free/escrow/margin/insurance liability ledger, reentrancy/donation handling, authenticated fixed-owner withdrawals and conservation tests. |
+| **Canonical custody only partially implemented** | Local free-balance custody/caps/exact deltas/owner exits are tested. Extend the same ledger with escrow/reservations, margin, fees/insurance and strategy buckets, prove conservation and implement reviewed module/deployment activation before public deposits. |
 | **No atomic settlement implementation** | Independently enforce both EIP-712 sides, fees/leverage/margin/price limits, partial-fill counters, nonce reuse/invalidation, expiry, close/liquidation and rollback. Prove unsafe/unsupported order types reject. |
 | **No onchain cancellation/race handling** | Authoritative cancellation/invalidation versus already pending fills. Offchain signed cancellation alone cannot revoke an onchain authorization. |
 | **No reconciler/confirmed risk state** | Durable settlement intent identity; canonical receipt/fill/balance/position reconciliation; replacement/revert/unknown/reorg policy; pending reservations and safe rejection/recovery without blind retry or invented positions. |
@@ -34,4 +34,4 @@ Do not bypass these by setting `executionEnabled`, supplying an address, adding 
 - Source landing/artwork redistribution rights remain unresolved; this blocks publishing those files, not implementing the isolated core. Preserve notices and the original source/funded state.
 - Full existing-terminal build/browser regression, independent money/security review, operating limits/finality policy and actual capped Fuji lifecycle evidence remain pending. Local/CI/benchmark results cannot replace them.
 
-**Next implementation priority:** Phase 3 custody + signed atomic bilateral settlement and adversarial/conservation tests; then confirmed reconciliation and existing-terminal/funding integration. Live Autopilot follows genuine both-leg/authority/recovery verification. See [`todo.md`](../todo.md) for the full ordered checklist.
+**Next implementation priority:** extend the partial canonical custody ledger + signed atomic bilateral settlement and adversarial/conservation tests; then confirmed reconciliation and existing-terminal/funding integration. Live Autopilot follows genuine both-leg/authority/recovery verification. See [`todo.md`](../todo.md) for the full ordered checklist.

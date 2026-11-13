@@ -37,7 +37,8 @@ Evidence: [foundation checks](docs/FOUNDATION_CHECKS.md), [Phase 1 scope](docs/P
 
 ## Phase 3 — canonical collateral and signed atomic settlement (P0)
 
-- [ ] Implement exact-delta ERC-20 custody, caps, reentrancy/donation handling, one canonical liability ledger and fixed-owner withdrawals.
+- [x] Implement [local-only exact-delta ERC-20 custody](docs/COLLATERAL_VAULT.md), cap, reentrancy/donation handling, canonical free balances and fixed-owner withdrawals. Twenty-four custody tests pass, including two 1,000-case fuzz properties. Fuji deposits cannot activate; this is only a partial Phase 3 slice.
+- [ ] Extend the same canonical ledger with escrow/reservations, pair margins, fees/insurance and required strategy buckets; implement/test actual module and deployment activation gates before public custody. Never add a parallel spendable balance.
 - [ ] Implement EIP-712 validation, trader identity, chain/deployment domain, nonce invalidation/cancellation, expiry and cumulative partial-fill accounting.
 - [ ] Validate both counterparties' price limits, fees, margin/collateral and position/size/liquidation constraints before atomically applying a matched fill.
 - [ ] Handle cancellation/matching races onchain; duplicates/replays and insufficient margin revert the entire fill. No unrestricted matcher balance/payout authority.

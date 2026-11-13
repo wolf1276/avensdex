@@ -1,6 +1,6 @@
 # Fuji CLOB deployment and verification gate
 
-**Current status:** no Solidity custody/settlement implementation or deployment script exists. The matcher/market-data service is implemented and tested locally; public order admission, confirmed positions and settlement remain unavailable. These are preparation/verification instructions, not a claim of deployment or approval to sign.
+**Current status:** a [local-only free-balance custody foundation](COLLATERAL_VAULT.md) exists, with Fuji deposits hard-disabled. Full collateral buckets, signed atomic settlement and deployment scripts remain unimplemented. The matcher/market-data service is implemented and tested locally; public order admission, confirmed positions and settlement remain unavailable. These are preparation/verification instructions, not a claim of deployment or approval to sign.
 
 ## Checks available now
 
