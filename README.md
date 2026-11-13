@@ -54,4 +54,6 @@ python3 -m scripts.compare_fuji_rpcs
 
 The network probes are read-only. Mainnet and transaction execution remain disabled. The active product is Fuji-only with no PAPER/simulated-execution fallback; local unit/fuzz/benchmark fixtures are development tests only.
 
+Hosted [Foundation checks passed at `6e03f26`](https://github.com/wolf1276/avensdex/actions/runs/43457508279). [Fuji deployment/verification prerequisites](docs/FUJI_CLOB_RUNBOOK.md) explain what remains unavailable and requires separate signing approval.
+
 See [Fuji qualification evidence and blockers](docs/FUJI_QUALIFICATION.md), the [Avalanche migration plan](docs/AVAX_MIGRATION_PLAN.md), [Architecture](docs/ARCHITECTURE.md) and [Roadmap](docs/ROADMAP.md).

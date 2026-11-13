@@ -11,7 +11,7 @@ NEAR source is preserved. New work lives in `packages/clob`, `services/clob` and
 - [x] Hash-verified complete local source snapshot, including relevant dirty/untracked source; exclude credentials/build outputs.
 - [x] Inspect current architecture, source Rust matching, wallet submission wrapper, funding, custody/risk/Guardian and terminal boundaries. [Audit](docs/CLOB_PLAN.md); complete security review is not claimed.
 - [x] Fresh copied-source regression: 162 TS and 134 Rust exchange tests; installed frontend dependencies reused, not a clean frontend release check.
-- [x] Pin initial tools and CI; run local/clean tracked-source equivalents. Hosted CI observation remains separate.
+- [x] Pin initial tools and CI; run local/clean tracked-source equivalents. [Hosted CI at `6e03f26` passed](https://github.com/wolf1276/avensdex/actions/runs/43457508279); root clean archive checks also pass.
 - [x] Test Solidity funding math against original TS/Rust rate vectors and stateful sign mirrors.
 - [x] Test explicit size6/price18/collateral6/raw-base units, capped payouts, funding remainders, partial-close dust and liquidation-risk math.
 - [x] Initial typed module/accounting/nonce contract and disabled manifest parser. Existing v1 onchain-book ABI is reference-only under the new CLOB plan.
@@ -75,6 +75,7 @@ Evidence: [foundation checks](docs/FOUNDATION_CHECKS.md), [Phase 1 scope](docs/P
 - [ ] Real wallet signed orders, settlement, funding, close/liquidation where safely applicable, hedge/recovery/revoke/withdraw and restart proof with actual receipts/token deltas.
 - [ ] Clean installation, CI/security/dependency/secret review, existing-terminal browser regression and reproducible benchmark/evidence report.
 - [ ] Reconcile original NEAR liabilities/pending state under original code; never reset or silently transfer funded state. Preserve immutable labeled history.
-- [ ] Publish accurate setup, bounded deployment/verification instructions, safe stop/recovery, demo and implemented-vs-pending README to the confirmed repository only.
+- [x] Publish [current Fuji deployment/verification prerequisites](docs/FUJI_CLOB_RUNBOOK.md), truthful unavailable-state setup and measured local benchmark. These are instructions, not deployment evidence or authorization.
+- [ ] Complete actual deployment/signing tools, public safe-stop/recovery proof, demo and release README once the genuine lifecycle passes; publish only to the confirmed repository.
 
 **Gate:** reconciled genuine Fuji lifecycle with no unresolved custody/security blocker. PAPER, local VM and fork results remain distinct. Centralized matching is disclosed. No profitability, liquidity, latency or decentralization claim without applicable evidence.
