@@ -1,0 +1,31 @@
+# Durable settlement reconciliation
+
+`packages/clob/settlement-journal.ts` records settlement lifecycle evidence, **not collateral balances or current positions**. It cannot sign, broadcast, retry, enable HTTP trading or activate Fuji custody. The matcher journal and settlement journal are distinct single-writer histories; an offchain provisional match is not a canonical fill.
+
+## Intent and transaction identity
+
+Persist `recordIntent` before submitting anything. Identity binds local/Fuji chain, nonzero deployment ID, settlement contract, expected pair ID, both EIP-712 order hashes, fill size/price, submitting sender and transport nonce. Intent IDs are deterministic SHA-256 digests; they are not Ethereum order hashes. Transport nonce zero is supported. A sender/nonce cannot be reserved for a different intent, even after restart, and a transaction hash cannot be attached to two intents.
+
+`recordBroadcast` records an already submitted transaction separately; a hash alone exposes no fill. Replacements are explicit identities for the same intent/sender/nonce, with at most 64 recorded candidates. Reconciliation checks prior candidates too: a replacement hash does not prove the original transaction was dropped. This module never automatically submits or resubmits an unknown transaction. Recording a hash is not submission authorization.
+
+The expected pair ID is a strict check, not a reservation. If concurrent permissionless settlement advances the onchain pair counter, the receipt must be reconciled explicitly against the actual event/contract state; no mismatched pair is silently credited and no automatic second fill is sent.
+
+## Confirmation and restart
+
+An injected read-only reader supplies receipts, canonical head and canonical block hashes. Every candidate receipt must have exact identity and status; confirmations must meet the journal's immutable policy. A successful receipt still needs exactly one matching `MatchedFill(uint64,bytes32,bytes32,uint128,uint128)` event from the exact settlement contract, with the expected hashes, pair ID, fill size, price, transaction and block/log identity. Reverted, pending, unavailable, malformed, mismatched and reorged outcomes remain distinct. The canonical head hash is checked again before final acceptance.
+
+Reconciliation is serialized. Caller inputs and asynchronous reader payloads are copied. Canonical block changes or unavailable evidence remove the fill from confirmed output until resynchronization. **Opening an existing journal downgrades historical broadcast/confirmation/revert states to unknown and requires fresh canonical reconciliation**; replay alone cannot expose a current confirmed fill. A successful recheck may update confirmations or downgrade if the canonical head rolls back. Callers must continue reconciling: a previously observed confirmation is not an everlasting finality guarantee.
+
+`confirmedFills()` reports validated fill events only. It is not a current-position ledger: funding, partial/full closes and liquidation must be read from canonical contract state at a coherent block. The existing live service remains unavailable rather than presenting these local development records as public positions.
+
+## RPC adapter
+
+`packages/clob/settlement-reader.ts` uses installed viem clients to decode actual receipt ABI bytes, not a caller-supplied success flag. Receipt and canonical providers must have the correct chain, nonempty matching pinned runtime code and matching onchain deployment ID; checks continue after startup. It validates receipt target, transaction/block/log identity and rejects removed or malformed matching logs. Receipt-not-found returns unavailable, not dropped/filled. Other provider errors propagate for conservative reconciliation.
+
+Callers must configure independently qualified providers and verify deployed code against their reviewed manifest. The adapter pins the observed runtime code and compares providers; this is not independent source-code verification or a public activation gate. A malicious or colluding RPC provider can lie. The two clients may point to the same local node for tests; that is not public multi-provider canonicality evidence.
+
+## Durability and checks
+
+The bounded append-only journal has an exclusive writer lock, hash/sequence checks, strict replay validation, fsync-before-state acknowledgment and directory fsync at creation. Missing state, identity/policy changes, corruption and incomplete tails fail closed; no automatic truncation/reset/lock theft occurs. Unknown writes poison the writer and retain the lock, including during startup reconciliation checkpointing. Recover only after confirming the old writer is stopped and reconciling the journal and canonical chain. Hash chains detect corruption and unrehashed edits, not a malicious filesystem owner.
+
+OpenCode drafted the journal and its initial 15 tests. Pi review added nonce-zero/identity isolation, restart revalidation, repeated confirmations/head rollback, original-after-replacement and head-change safeguards with regression tests, plus a real-byte RPC adapter and five tests. Twenty journal and five adapter tests pass under `npm run test:clob`; TypeScript typechecking passes. Deterministic reader mocks are unit-test fixtures, not public settlement evidence.
