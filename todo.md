@@ -35,25 +35,25 @@ Evidence: [foundation checks](docs/FOUNDATION_CHECKS.md), [Phase 1 scope](docs/P
 
 **Local gate passed:** reproducible signed matcher/journal/transport behavior. All matches remain provisional; no collateral, confirmed positions or onchain transactions are fabricated. [Live-trading blocker review](docs/LIVE_TRADING_BLOCKERS.md): Phase 3, genuine deployment/readiness and downstream integration gates remain mandatory.
 
-## Phase 3 — canonical collateral and signed atomic settlement (P0)
+## Phase 3 — canonical collateral and signed atomic settlement (P0; supported local gate complete)
 
-- [x] Implement [local-only exact-delta ERC-20 custody](docs/COLLATERAL_VAULT.md), cap, reentrancy/donation handling, canonical free balances and fixed-owner withdrawals. Twenty-four custody tests pass, including two 1,000-case fuzz properties. Fuji deposits cannot activate; this is only a partial Phase 3 slice.
-- [ ] Extend the same canonical ledger with escrow/reservations, pair margins, fees/insurance and required strategy buckets; implement/test actual module and deployment activation gates before public custody. Never add a parallel spendable balance.
-- [ ] Implement EIP-712 validation, trader identity, chain/deployment domain, nonce invalidation/cancellation, expiry and cumulative partial-fill accounting.
-- [ ] Validate both counterparties' price limits, fees, margin/collateral and position/size/liquidation constraints before atomically applying a matched fill.
-- [ ] Handle cancellation/matching races onchain; duplicates/replays and insufficient margin revert the entire fill. No unrestricted matcher balance/payout authority.
-- [ ] Preserve isolated bilateral capped settlement, fees, partial/full close and liquidation; no basic spot order-book substitute.
-- [ ] Keep unsupported market/reduce-only/strategy order settlement disabled until each corresponding risk constraint is tested.
-- [ ] Durable settlement intent/receipt reconciliation, confirmation policy, replacement/revert/unknown handling and genuine position updates. Never auto-resubmit an unknown outcome.
-- [ ] Foundry forgery/replay/race/insufficient-collateral/conservation/oracle/failure tests and bounded gas/code-size checks.
+- [x] Implement [local-only exact-delta ERC-20 custody](docs/COLLATERAL_VAULT.md), cap, reentrancy/donation handling, canonical free balances and fixed-owner withdrawals. Fuji deposits cannot activate.
+- [x] Extend the same canonical ledger with manual-order escrow/reservations, pair margins and fees/insurance; freeze one code/reference-checked settlement binding before local activation. Public activation stays hard-disabled. Strategy buckets/authority remain Phase 5 work and cannot be enabled through the manual schema.
+- [x] Implement EIP-712 validation, trader identity, chain/deployment domain, monotonic explicit nonce invalidation, exact-hash cancellation, expiry and cumulative partial-fill accounting.
+- [x] Validate both counterparties' price limits, signed fee caps, leverage/margin/collateral, independent-reference price band and position/size/liquidation constraints before atomically applying a matched fill.
+- [x] Resolve cancellation/matching races onchain, including owner cancellation before first reservation/fill; duplicates/replays and insufficient margin revert the entire fill. No unrestricted matcher balance/token-payout authority.
+- [x] Preserve isolated bilateral capped settlement, fees, payer-bounded funding checkpoints, fractional rounding, partial/full close and permissionless unsafe-only liquidation; no basic spot order-book substitute.
+- [x] Keep unsupported market/reduce-only/post-only/IOC/strategy settlement disabled until its risk semantics are tested. The supported path is manual vanilla limit orders only.
+- [x] [Durable settlement reconciliation](docs/SETTLEMENT_RECONCILIATION.md): intent-before-dispatch identity, canonical decoded receipts/events, confirmation policy, original/replacement/revert/unknown/reorg handling and current positions from both modules at one pinned canonical block. Restart/lost-hash ambiguity pauses; no automatic signing, retry or simulated positions.
+- [x] Foundry forgery/replay/race/insufficient-collateral/conservation/oracle/failure tests and bounded local gas/code-size checks. [Phase 3 evidence and limits](docs/PHASE3_STATUS.md): 84 Foundry, 94 TypeScript and 12 Python tests plus typecheck and a fresh Anvil/Paris lifecycle checking 24 actual local receipts.
 
-**Gate:** actual local-EVM signed order → atomic funded fill → position/close → owner withdrawal. Successful submission is not confirmation or a filled order.
+**Supported local gate passed:** signed order → atomic funded fill → canonical position/funding → partial/full close → settled owner token withdrawal. This is local fixture evidence, not public Fuji execution. Adaptive funding/epochs, strategy allocation/inventory, UI/Guardian integration and public qualification/activation remain later gates. Successful submission alone is not confirmation or a filled order.
 
 ## Phase 4 — existing terminal, adaptive funding and lifecycle (P0d/P1)
 
 - [ ] Preserve existing landing/Trade layout/branding; no standalone book demo or terminal rebuild.
 - [ ] Wire EVM wallet/chain/account invalidation, approvals/deposits and typed contract reads/mutations.
-- [ ] Connect live depth/BBO/spread/trades, limit/market controls and order status with explicit provisional/pending/confirmed/reverted states.
+- [ ] Connect live depth/BBO/spread/trades, supported order controls and explicit provisional/pending/confirmed/reverted states; wire canonical settlement outcomes and pending-match capacity release into the existing journal/feed without retrying unknown outcomes. Unsupported market/flags stay unavailable.
 - [ ] Distinguish last traded price, independent index and validated mark; matcher cannot unilaterally control funding or liquidation.
 - [ ] Apply baseline/adaptive math, smoothing/caps, oracle freshness, epochs/rate expiry, index settlement and payment conservation. Never use matched long-OI-minus-short-OI as the primary premium signal.
 - [ ] Show actual funding, positions, margin, costs and real explorer links; unavailable sources fail closed, not simulated success.

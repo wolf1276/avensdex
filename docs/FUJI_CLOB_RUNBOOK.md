@@ -1,6 +1,6 @@
 # Fuji CLOB deployment and verification gate
 
-**Current status:** a [local-only free-balance custody foundation](COLLATERAL_VAULT.md) exists, with Fuji deposits hard-disabled. Full collateral buckets, signed atomic settlement and deployment scripts remain unimplemented. The matcher/market-data service is implemented and tested locally; public order admission, confirmed positions and settlement remain unavailable. These are preparation/verification instructions, not a claim of deployment or approval to sign.
+**Current status:** the [supported local Phase 3 gate](PHASE3_STATUS.md) passes with canonical manual collateral buckets, signed atomic bilateral settlement, funding/close/liquidation, canonical reconciliation and owner withdrawals. Fuji deposits, oracle publication and settlement writes remain hard-disabled; public deployment/signing tools and qualified activation remain unavailable. The matcher/market-data service is implemented and tested locally; public order admission, confirmed positions and settlement remain unavailable. These are preparation/verification instructions, not a claim of deployment or approval to sign.
 
 ## Checks available now
 
@@ -16,7 +16,7 @@ Hosted [Foundation checks at `6e03f26`](https://github.com/wolf1276/avensdex/act
 
 ## Before any public signing
 
-1. Implement and test the canonical collateral/position ledger and signed atomic settlement, including both counterparties, fee bounds, cancellation/invalidation, expiry, cumulative fills, margin, close/liquidation and replay/race failures. Keep unsupported types unavailable.
+1. Review the implemented/tested [local signed settlement boundary](PHASE3_STATUS.md), including both counterparties, fee bounds, cancellation/invalidation, expiry, cumulative fills, margin, close/liquidation and replay/race failures. Independent review, actual public deployment verification and a separately reviewed activation mechanism are still required. Keep unsupported order types and strategy authority unavailable.
 2. Freeze actual EIP-712 name/version/field types and verifying deployment; verify chain **43113**. The existing onchain-book v1 interfaces are not a deployed CLOB or signature ABI.
 3. Qualify actual collateral/base code, decimals, proxy/admin/transfer behavior, independent oracle cadence/freshness, executable spot route and canonicality/provider policy. Candidate token metadata alone does not qualify deposits or a hedge.
 4. Obtain a separate bounded authorization identifying deployer/owner/oracle/executor, allowed contracts/actions, maximum AVAX/gas/collateral/exposure, expiry, stop conditions and recovery. Do not reuse NEAR credentials or source-chain spending permission.

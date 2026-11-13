@@ -2,7 +2,7 @@
 
 The identified NEARFlow source already contains the UI and exchange. [`todo.md`](../todo.md) is now the active six-phase port task list, derived from the source's full migration plan. This page retains the original target gates; it is not an instruction to rebuild existing features.
 
-M0 qualification has started with tested read-only network probes; see [recorded evidence and blockers](FUJI_QUALIFICATION.md). All milestone gates remain incomplete. No public deployment or successful trading execution is implied by this checklist.
+M0 qualification has started with tested read-only network probes; see [recorded evidence and blockers](FUJI_QUALIFICATION.md). Public milestone gates remain incomplete; the [supported Phase 3 local settlement gate](PHASE3_STATUS.md) is complete. No public deployment or successful trading execution is implied by this checklist.
 
 The [Avalanche migration plan](AVAX_MIGRATION_PLAN.md) expands these milestones into qualification decisions, workstreams, acceptance gates and operating controls.
 
@@ -20,11 +20,11 @@ The [Avalanche migration plan](AVAX_MIGRATION_PLAN.md) expands these milestones 
 ## 2. Contract foundations and exchange
 
 - [x] Implement explicit asset units and bounded pure funding/risk math with source reference vectors and local property tests. [Phase 1 results](PHASE1_STATUS.md); stateful exchange implementation remains open.
-- [ ] Implement canonical custody, exact token deltas, caps, escrow and owner withdrawals.
+- [x] Implement canonical custody, exact token deltas, caps, manual-order escrow and owner withdrawals; [local Phase 3 tests](PHASE3_STATUS.md). Public activation and strategy books remain disabled.
 - [x] Implement bounded offchain price-time matching, partial fills, IOC/post-only/reduce-only, expiry and nonces; [Phase 2 signed local admission](CLOB_ADMISSION.md) is tested. Public activation remains gated on actual custody/settlement and deployment readiness.
-- [ ] Implement bilateral settlement, fees, partial/full closes and liquidation.
+- [x] Implement local signed bilateral settlement, fees, partial/full closes and liquidation for supported vanilla limit orders. Fuji remains disabled.
 - [ ] Implement funding index settlement, payer limits, rounding, epoch protection and stale-gap behavior.
-- [ ] Verify deployment size, EVM compatibility and worst-case gas.
+- [x] Verify local runtime size, Paris compatibility and tested fill/close gas bounds. Public Fuji execution costs/finality and independent assurance remain unqualified.
 
 **Gate:** unit, differential, fuzz and conservation tests pass.
 

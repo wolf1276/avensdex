@@ -1,10 +1,10 @@
 # Protocol interface contract — version 1
 
-**CLOB design update:** [the current plan](CLOB_PLAN.md) supersedes this initial onchain-book placement/matching API for the new execution path. These v1 interfaces remain reference specifications, not deployed settlement. Canonical custody, fixed-owner payouts, scoped authority and nonce/conservation invariants still apply. The signed-fill settlement ABI must be separately specified/implemented/tested before admission or settlement activation.
+**CLOB design update:** [the current plan](CLOB_PLAN.md) supersedes this initial onchain-book placement/matching API for the new execution path. These v1 interfaces remain reference specifications, not deployed settlement. Canonical custody, fixed-owner payouts, scoped authority and nonce/conservation invariants still apply. The separate [signed-fill implementation and local gate](PHASE3_STATUS.md) are now tested; neither this reference ABI nor local tests enable public admission or settlement.
 
 Status: frozen **initial interface specification**, compiled with Solidity 0.8.30. No implementations of these v1 interfaces or deployed authorization are claimed. Changes to these boundaries require a reviewed spec/ABI change and updated tests, not silent reinterpretation. Current definitions are in `contracts/evm/src/interfaces/`.
 
-**Implemented custody slice:** [AvensVault](COLLATERAL_VAULT.md) provides local-only manual free balances and fixed-owner payouts. It deliberately does not implement the v1 ABI below, settlement/module authority, strategy books or public activation. Fuji deposits cannot activate in this version. Remaining bucket/authority rules here are target requirements, not completed implementations.
+**Implemented CLOB boundary:** [AvensVault](COLLATERAL_VAULT.md) now owns manual free balances, reservations, bilateral margins, fees and insurance under one immutable settlement binding. [AvensSettlement](PHASE3_STATUS.md) validates signed manual vanilla-limit fills and implements bounded funding/close/liquidation; [reconciliation](SETTLEMENT_RECONCILIATION.md) checks genuine canonical receipts and position views. These deliberately do not implement the v1 ABI below or strategy books/policies. Fuji deposits, oracle publication and settlement writes remain disabled. Strategy inventory/authority and public activation rules here remain target requirements, not completed implementations.
 
 ## Identity, units and books
 
