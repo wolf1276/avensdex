@@ -66,6 +66,12 @@ Both RPCs also accepted `eth_getBlockByNumber("finalized", false)` and returned 
 
 No base token, oracle feed or executable spot route was selected or tested here. Missing data is **not qualified**, not proof that no Fuji route exists. No signature, submission, token transfer or gas expenditure occurred.
 
+## Phase 2 repeat and freshness correction
+
+Read-only observation at `2026-11-13T19:15:33.492053+00:00`: both fixed providers agreed on block `61019217`, hash `0x2c856e6ac3410e78d0e0fa4182fd2e198e2ec9f979796d9fce77909fe0c99e5e`, timestamp `1794597326`; heads `61019219` and `61019221`. No transactions or gas expenditure.
+
+The comparison previously captured the production wall clock before network I/O; a head produced while requests were in flight could be falsely rejected as future-dated. A new regression reproduces this failure. With no injected test clock, freshness now uses the clock sampled after each RPC response, preserving the strict future/stale/identity/disagreement checks. All **12 Python tests** pass. This fixes a probe false negative, not a protocol/oracle finality policy, and does not establish the cause of every earlier transport/freshness failure. See [the Phase 2 live-trading blocker review](LIVE_TRADING_BLOCKERS.md).
+
 ## Remaining gates
 
 1. Confirm initial market, collateral/base assets, capped bilateral settlement and public-validation scope with owner. AVAX exposure remains a candidate, not an approved market.

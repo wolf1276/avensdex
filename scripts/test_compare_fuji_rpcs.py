@@ -1,7 +1,7 @@
 import json
 import unittest
-from datetime import datetime, timezone
-from unittest.mock import MagicMock
+from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock, patch
 
 from scripts.compare_fuji_rpcs import compare
 from scripts.qualify_fuji import CONFIG, QualificationError, RPC, SECONDARY_RPC, rpc
@@ -49,6 +49,27 @@ class ProviderComparisonTests(unittest.TestCase):
     def test_provider_outage_does_not_fallback(self):
         with self.assertRaises(TimeoutError):
             compare(self.config, MagicMock(side_effect=TimeoutError), self.now)
+
+    def test_live_freshness_uses_response_time_not_comparison_start(self):
+        # A head produced while RPC calls are in flight is not future-dated at receipt.
+        clock = MagicMock()
+        clock.now.return_value = self.now
+        stamp = hex(int((self.now + timedelta(seconds=3)).timestamp()))
+        replies = iter([
+            "0xa869", {**self.block, "number": "0x64", "timestamp": stamp},
+            "0xa869", {**self.block, "number": "0x65", "timestamp": stamp},
+            {**self.block, "timestamp": stamp}, {**self.block, "timestamp": stamp},
+        ])
+
+        def delayed_response(*_args):
+            clock.now.return_value = self.now + timedelta(seconds=5)
+            return next(replies)
+
+        with patch("scripts.compare_fuji_rpcs.datetime", clock), patch("scripts.qualify_fuji.datetime", clock):
+            result = compare(self.config, delayed_response)
+        self.assertEqual(result["blockNumber"], 98)
+        self.assertEqual(clock.now.call_count, 4)
+        self.assertFalse(result["executionEnabled"])
 
     def test_unknown_endpoint_rejected(self):
         with self.assertRaises(QualificationError):

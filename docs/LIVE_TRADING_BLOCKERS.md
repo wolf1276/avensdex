@@ -2,12 +2,14 @@
 
 **Decision: NOT READY. Keep public trading/settlement and Autopilot disabled.** Phase 2 local signed matching/data delivery is implemented; none of its provisional events establish collateral, positions, liquidity or a public fill.
 
-## Checked now
+## Checked at the Phase 2 checkpoint
+
+Signed implementation basis: `e09050a`, plus the response-time RPC freshness fix described below. This report does not claim completion of subsequent Phase 3 work.
 
 - `config/fuji.json`: Fuji `43113`, `executionEnabled:false`, `mainnetEnabled:false`, no deployed module/asset/oracle addresses. The current manifest parser rejects execution-enabled configurations.
 - Solidity source: interfaces and pure math/authentication libraries only. No implemented canonical vault, stateful exchange/settlement, funding controller or strategy executor. The new hash/recovery library is not a settlement shortcut.
 - Executable journal binding: settlement contract unset. HTTP writes and `/ready` return 503; signed in-process authorization cannot turn on those endpoints. Tests verify both null and nonzero fixture bindings remain network-write-disabled.
-- Real public, **read-only** RPC observation at `2026-11-13T16:21:02.095354+00:00`: both fixed providers agreed on Fuji block **61012562**, hash **`0xbbd024b42de463b53fd6f48605a27c85b24b406685c79d0bcac531e38f590b19`**, timestamp **1794586852**; heads **61012564/61012565**. This is identity/same-height agreement, not a finality guarantee or application readiness. An earlier comparison attempt failed closed; separate provider reads and the recorded repeat passed. The initial failure's cause was not captured, so no root-cause claim or stable-availability guarantee is made.
+- Real public, **read-only** RPC observation at `2026-11-13T19:15:33.492053+00:00`: both fixed providers agreed on Fuji block **61019217**, hash **`0x2c856e6ac3410e78d0e0fa4182fd2e198e2ec9f979796d9fce77909fe0c99e5e`**, timestamp **1794597326**; heads **61019219/61019221**. This is identity/same-height agreement, not finality or application readiness. During the review, probes failed closed with a freshness error. A reproduced timing bug sampled the wall clock before RPCs completed, falsely rejecting heads produced in flight; the corrected probe samples after each response. A regression failed before the fix and all 12 Python tests pass afterward. This does not prove every earlier failure had that cause or establish stable provider availability.
 - No public deployment, public wallet signing, token movement or gas expenditure. Local signatures and synthetic addresses are test fixtures only. Earlier USDC metadata observations were not rerun as a full asset qualification and do not enable collateral.
 
 ## Blocking manual perpetual trading

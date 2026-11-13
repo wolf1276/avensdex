@@ -1,16 +1,16 @@
 """Compare independently operated public Fuji RPCs; never submit transactions."""
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
 
 from scripts.qualify_fuji import (
     CONFIG, RPC, SECONDARY_RPC, QualificationError, qualify, rpc, validate_config,
 )
 
 
-def compare(config, call=rpc, now=None):
+def compare(config, call=rpc, now: datetime | None = None):
     validate_config(config)
-    now = datetime.now(timezone.utc) if now is None else now
+    # With no fixed test clock, qualify samples time after each response, not before network I/O.
     endpoints = (RPC, SECONDARY_RPC)
     heads = []
     for endpoint in endpoints:
