@@ -58,4 +58,4 @@ An owner-authorized execution-validation session must remain distinct from inves
 - Compatible EVM wallet/public-client tooling, selected and pinned during implementation
 - One independently verified spot venue integration initially
 
-Tools, deployments, token addresses, oracle feeds and routes remain unselected/unverified until the corresponding roadmap gate passes. No address placeholders should silently enable execution.
+Initial Node/TypeScript, Foundry/Solidity and Rust-reference tools are pinned; [local foundation results](PHASE1_STATUS.md) record their checks. Actual deployments, asset behavior, oracle feeds and executable routes remain unqualified until the corresponding gate passes. Candidate metadata reads and parser success cannot enable execution; no address placeholders silently enable it.

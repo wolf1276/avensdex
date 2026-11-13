@@ -8,7 +8,7 @@ Local reference: `legacy/nearflow/` (ignored, not a published runtime). [Baselin
 
 | Phase | Deliverable | Dependencies | Status / acceptance |
 | --- | --- | --- | --- |
-| 1 | Source parity, units/risk/funding math, interfaces and qualification | Existing NEARFlow baseline | **In progress:** source snapshot and pure funding-math parity pass; remaining tasks below |
+| 1 | Source parity, units/risk/funding math, interfaces and qualification | Existing NEARFlow baseline | **In progress:** math/interfaces/disabled manifests and local CI equivalents pass; source review, rights and public qualification gates remain open |
 | 2 | Solidity vault, matched exchange, funding settlement and liquidation | Reviewed Phase 1 accounting/interfaces | Pending; custody conservation, fuzz/invariants and bounded gas must pass |
 | 3 | Avalanche wallet/ABI/API integration into the existing terminal; no UI rebuild | Phase 2 ABIs/local contracts | Pending; actual local-wallet deposit/trade/close/withdraw flow must pass |
 | 4 | Isolated strategy authority and durable EVM transport | Phase 2 custody/exchange; reviewed policy schema | Pending; authorization, replay/revoke and transaction-recovery tests must pass |
@@ -19,11 +19,11 @@ Implementation order is 1 → 2 → 3 → 4 → 5 → 6. Read-only asset/oracle/
 
 ### Immediate implementation queue
 
-1. Port source asset-unit conversions and bilateral risk/payout math, including signed rounding, partial-close dust and capped gains/losses; add shared reference and boundary/property tests.
-2. Freeze the typed vault/exchange/executor/oracle/reader call graph, canonical liability buckets and role/nonce ownership; test the trust boundaries as implementations land.
-3. Add reproducible CI for current TS/Rust reference, Solidity and network-tool checks; establish fresh source regression results separately from EVM results.
-4. Continue read-only Fuji asset/oracle/venue/finality qualification; record exact verified identities and failures before binding integrations.
-5. Start Phase 2 with exact-delta collateral deposits and authenticated owner withdrawals, then escrow/margins and matching. Keep each logical change with its tests and a small commit.
+1. Finish the remaining source subsystem/semantic review; use the fresh 162 TS / 134 Rust exchange regressions as baseline evidence, not as a security audit.
+2. Complete read-only Fuji base/token/proxy/transfer/oracle/spot/finality qualification and confirm the exact execution scope. USDC candidate metadata/code is partially verified; no asset/route is enabled.
+3. Resolve missing supplied landing-source/artwork redistribution permission before publishing those files; keep the full reference snapshot local in the meantime.
+4. Implement the Phase 2 vault against the reviewed typed interfaces after its applicable foundation decisions pass: exact-delta collateral deposits/owner withdrawals first, then escrow/margins and matching. Public integration remains blocked independently.
+5. Keep each logical change with its tests and a small feature-named commit. Observe hosted CI after an authorized push; current CI evidence is local only.
 
 No phase is complete merely because its plan or files exist. Report implementation, external integration, economic admission and public activation separately. New commits use actual execution timestamps; recorded test/chain evidence is never backdated.
 
@@ -32,7 +32,8 @@ No phase is complete merely because its plan or files exist. Report implementati
 - [x] Locate and read source architecture, current roadmap and complete Avalanche migration plan.
 - [x] Snapshot working source including untracked landing/terminal/contract work; verify file hashes without changing the original.
 - [x] Exclude credentials, environment files, dependency/build directories and private key files.
-- [ ] Finish module-by-module review and establish fresh source regression results; old test counts are not new evidence.
+- [x] Establish fresh source regressions on the copied baseline: 162 TS tests and 134 Rust exchange tests pass. [Environment and limits](docs/FOUNDATION_CHECKS.md); existing installed frontend dependencies were reused, so this is not a clean frontend release check.
+- [ ] Finish remaining module-by-module semantic/source review. Boundary specifications and passing tests do not substitute for a complete source review.
 - [ ] Preserve third-party notices; resolve landing code/artwork redistribution permission before publishing it.
 - [x] Pin initial EVM tools/compiler target; reuse existing TypeScript/Rust funding references and golden vectors. [Local checkpoint](docs/EVM_FOUNDATION.md); public target verification remains pending.
 - [x] Add pinned, read-only CI for clean install, dependency audit, TS/Python/Solidity tests, Solidity formatting and locked Rust reference checks. Local equivalents pass; hosted GitHub Actions has not been run.
@@ -41,7 +42,7 @@ No phase is complete merely because its plan or files exist. Report implementati
 - [x] Freeze initial typed vault/exchange/executor/oracle/reader interfaces, role bindings and execution-disabled manifest schema. [Interface/authority contract](docs/MODULE_CONTRACT.md); selector/parser checks pass. Runtime enforcement remains Phase 2/4; enabled activation needs a separately reviewed schema.
 - [ ] Qualify exact Fuji collateral/base, independent oracle, spot route/version, finality and operational limits. AVAX/WAVAX is a candidate, not an enabled market.
 
-**Gate:** reproducible local parity checks; exact integration blockers recorded. No address placeholders enable execution.
+**Gate status: still open.** Reproducible local foundation checks pass, including a clean tracked-source archive install/test. Remaining source review, missing landing redistribution permission and unqualified public asset/oracle/spot/finality decisions are not marked complete. [Phase 1 report](docs/PHASE1_STATUS.md). No address placeholders enable execution.
 
 ## Phase 2 — custody and matched exchange port (M2)
 

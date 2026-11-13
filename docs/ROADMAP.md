@@ -19,7 +19,7 @@ The [Avalanche migration plan](AVAX_MIGRATION_PLAN.md) expands these milestones 
 
 ## 2. Contract foundations and exchange
 
-- [ ] Implement explicit asset units and bounded funding math with reference vectors.
+- [x] Implement explicit asset units and bounded pure funding/risk math with source reference vectors and local property tests. [Phase 1 results](PHASE1_STATUS.md); stateful exchange implementation remains open.
 - [ ] Implement canonical custody, exact token deltas, caps, escrow and owner withdrawals.
 - [ ] Implement bounded price-time matching, partial fills, IOC/post-only/reduce-only, expiry and nonces.
 - [ ] Implement bilateral settlement, fees, partial/full closes and liquidation.
@@ -53,7 +53,7 @@ The [Avalanche migration plan](AVAX_MIGRATION_PLAN.md) expands these milestones 
 
 ## 5. Client and read boundary
 
-- [ ] Build the landing and manual Trade terminal with valid navigation.
+- [ ] Preserve the existing landing and manual Trade terminal; verify valid navigation and Avalanche connectivity without rebuilding the UI.
 - [ ] Wire wallet connection, chain switching, approvals, deposits and account-change invalidation.
 - [ ] Show actual positions, funding units/history, gas, margin, costs and receipt links.
 - [ ] Integrate strategy allocation, policy confirmation, pending legs, pause/revoke/recover/close/withdraw inside Trade.

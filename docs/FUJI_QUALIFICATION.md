@@ -36,12 +36,42 @@ Actual public read at `2026-11-13T14:13:20.124266+00:00` agreed on block `610073
 
 Eleven local unit tests passed. The initial PublicNode Python request returned HTTP 403; identifying the tool with `User-Agent: avensdex-qualification/1.0` resolved it. Provider throttling/history limits, WebSocket behavior and finality remain unqualified.
 
+## Phase 1 read-only asset observation
+
+Source basis: `130529e` plus the documented read commands; observed 2026-11-13. A new two-provider comparison at `2026-11-13T15:02:10.985530+00:00` passed at Fuji block `61009285`, hash `0xafbe8c382e38c700187ea69d46c569ef87268ef4ad66169c9e4f00209c46c442`, timestamp `1794582124`.
+
+The official [Circle address registry](https://developers.circle.com/stablecoins/usdc-contract-addresses), retrieved during this check, lists Fuji candidate `0x5425890298aed601595a70AB815c96711a31Bc65`. At that exact block, both the Avalanche public RPC and PublicNode independently returned:
+
+- `decimals()`: `6`.
+- `symbol()`: `USDC`.
+- `paused()`: `false`.
+- Nonempty runtime code with Keccak-256 hash `0x7140a935aa3bb55d334d6d325fea277e47674770b10823feefa6f8b2c58af5fc`.
+
+Reproduce each read for both fixed providers (historical-state availability may change):
+
+```sh
+RPC=https://api.avax-test.network/ext/bc/C/rpc
+TOKEN=0x5425890298aed601595a70AB815c96711a31Bc65
+BLOCK=61009285
+cast call "$TOKEN" 'decimals()(uint8)' --rpc-url "$RPC" --block "$BLOCK"
+cast call "$TOKEN" 'symbol()(string)' --rpc-url "$RPC" --block "$BLOCK"
+cast call "$TOKEN" 'paused()(bool)' --rpc-url "$RPC" --block "$BLOCK"
+cast code "$TOKEN" --rpc-url "$RPC" --block "$BLOCK" | cast keccak
+# Repeat using https://avalanche-fuji-c-chain-rpc.publicnode.com.
+```
+
+This partially verifies candidate identity/metadata only. Proxy implementation/admin controls, freezing/blacklisting, supported transfer behavior, actual acquisition/deposit/withdrawal and fresh issuer risk remain unqualified. A proxy runtime hash does not freeze its implementation. No token is enabled by this report and testnet USDC is not a claim of redeemable dollar backing.
+
+Both RPCs also accepted `eth_getBlockByNumber("finalized", false)` and returned the same block `61009427` (`0x3a2ee13`), hash `0xa7328eda32ddc429121f5208d2fbbc279ebd0cc89306d3d046a88a97eed53788`, timestamp `1794582302`. This observes tag support/agreement once; it does not establish a reviewed receipt canonicality/reorg/disagreement operating policy.
+
+No base token, oracle feed or executable spot route was selected or tested here. Missing data is **not qualified**, not proof that no Fuji route exists. No signature, submission, token transfer or gas expenditure occurred.
+
 ## Remaining gates
 
 1. Confirm initial market, collateral/base assets, capped bilateral settlement and public-validation scope with owner. AVAX exposure remains a candidate, not an approved market.
 2. Extend observed two-provider agreement with finality, history availability, operational limits and a reviewed failover policy.
-3. Qualify asset code/decimals/transfer behavior, exact oracle feed/freshness and executable two-way spot liquidity at intended sizes. No addresses have been selected or verified.
-4. Freeze accounting/funding rules, interfaces, deployment schema and production toolchain before dependent implementation. Python is qualification tooling only.
+3. Complete asset/proxy/transfer qualification, wrapped-base identity, exact oracle feed/freshness and executable two-way spot liquidity at intended sizes. The USDC candidate metadata/code observation above is not complete asset qualification or approval.
+4. Initial unit/risk/funding math, typed module/authority boundaries and execution-disabled manifest schema are implemented; see [foundation checks](FOUNDATION_CHECKS.md). Actual custody/authority implementations and an enabled deployment schema remain future gates. Python is qualification tooling only.
 5. Obtain bounded authorization before public deployment or signing. The start request does not establish signer, budgets, expiry or allowed actions.
 
-No complete M0 gate, economic eligibility, contract implementation, public hedge execution or profitability is claimed. Mainnet remains out of scope.
+No complete M0 gate, economic eligibility, deployed custody/exchange implementation, public hedge execution or profitability is claimed. Mainnet remains out of scope.

@@ -14,12 +14,12 @@ npm run test:funding:rust
 
 The GitHub workflow `.github/workflows/checks.yml` pins action revisions and tool versions. It has contents-read-only permission, does not persist checkout credentials and has no signing/deployment jobs or private keys. It runs local unit/reference tests, not public liquidity probes. The source snapshot, its dependencies and the existing frontend are not required by these tracked-code checks.
 
-Local commands above passed. YAML syntax/structure, pinned action references and read-only/no-secret workflow configuration were checked locally. A hosted GitHub Actions run has **not** been observed; a workflow file does not establish that CI ran.
+Local commands above passed. YAML syntax/structure, pinned action references and read-only/no-secret workflow configuration were checked locally. A clean tracked-source `git archive` of revision `130529e` was separately installed/tested outside the original directory: npm install/test, locked Rust reference and Solidity formatting passed without the ignored source snapshot. The later matching/expiry ABI addition was tested in the current tree. A hosted GitHub Actions run has **not** been observed; a workflow file does not establish that CI ran.
 
 ## Actual local coverage
 
 - Four TypeScript funding tests, twelve protocol tests (eight units/risk and four manifest-parser tests), eleven Python network-tool tests.
-- Fourteen Foundry tests, including three properties at 1,000 fuzz runs each: funding bounds/symmetry, bilateral conservation, raw inventory/dust.
+- Fifteen Foundry tests, including three properties at 1,000 fuzz runs each: funding bounds/symmetry, bilateral conservation, raw inventory/dust.
 - Four locked Rust funding reference tests.
 - TypeScript strict check covers current pure funding and protocol modules. It does not typecheck the ignored legacy frontend.
 - Original source accounting/funding vectors are retained unchanged. Stateful tests include both funding signs, fractional carry/replay/reversal, capped payout, full/partial close and malformed/out-of-range configuration.
