@@ -1,114 +1,80 @@
-# Avensdex — NEARFlow → Avalanche delivery
+# AVENSDEX — CLOB delivery checklist
 
-Authoritative source: the complete NEARFlow working tree, including dirty/untracked work, captured in [the source manifest](config/nearflow-source.json). Its `migration.md` defines the protocol port; its `todo.md` distinguishes existing features from unfinished genuine execution. Preserve those semantics. This is not a greenfield exchange or UI rebuild.
+The low-latency CLOB request supersedes the prior onchain order-book delivery order, not the product: perpetuals, adaptive funding, owner-controlled delta-neutral Autopilot, Guardian and existing branding/terminal remain required. [Audited implementation plan](docs/CLOB_PLAN.md). [Source baseline](docs/NEARFLOW_BASELINE.md).
 
-Local reference: `legacy/nearflow/` (ignored, not a published runtime). [Baseline and limitations](docs/NEARFLOW_BASELINE.md).
+Active execution is **Fuji-only**: no PAPER mode, synthetic balances, fake fills or fallback simulation. Missing genuine execution is unavailable. Local unit/fuzz/benchmark fixtures remain development tests, not shipped trading or public evidence. Historical source evidence is preserved, not relabeled.
 
-## Phase sequence and current status
+NEAR source is preserved. New work lives in `packages/clob`, `services/clob` and `contracts/evm`; no source-chain balances, keys or journals are reused as Avalanche authority. Use Ponytail, small feature-named commits and a push after each completed tested unit. Secrets, local instructions and unreviewed-rights source remain excluded.
 
-| Phase | Deliverable | Dependencies | Status / acceptance |
-| --- | --- | --- | --- |
-| 1 | Source parity, units/risk/funding math, interfaces and qualification | Existing NEARFlow baseline | **In progress:** math/interfaces/disabled manifests and local CI equivalents pass; source review, rights and public qualification gates remain open |
-| 2 | Solidity vault, matched exchange, funding settlement and liquidation | Reviewed Phase 1 accounting/interfaces | Pending; custody conservation, fuzz/invariants and bounded gas must pass |
-| 3 | Avalanche wallet/ABI/API integration into the existing terminal; no UI rebuild | Phase 2 ABIs/local contracts | Pending; actual local-wallet deposit/trade/close/withdraw flow must pass |
-| 4 | Isolated strategy authority and durable EVM transport | Phase 2 custody/exchange; reviewed policy schema | Pending; authorization, replay/revoke and transaction-recovery tests must pass |
-| 5 | Qualified spot integration, real hedge composition and Guardian | Phase 4 plus qualified venue/route | Pending; real token/position deltas, failure recovery and runtime matrix must pass |
-| 6 | Capped public Fuji lifecycle, safe cutover and release | All applicable implementation/integration gates plus bounded signing authorization | Pending; public receipts and reconciled custody/owner exits required |
+## Phase 1 — foundation and source boundary (local foundation delivered; external gates open)
 
-Implementation order is 1 → 2 → 3 → 4 → 5 → 6. Read-only asset/oracle/venue qualification runs alongside local implementation; it cannot be deferred past the integration it enables. Existing UI preservation can proceed against reviewed schemas without claiming wallet/execution completion. An unavailable Fuji route blocks public hedge validation, not unrelated local parity work.
+- [x] Hash-verified complete local source snapshot, including relevant dirty/untracked source; exclude credentials/build outputs.
+- [x] Inspect current architecture, source Rust matching, wallet submission wrapper, funding, custody/risk/Guardian and terminal boundaries. [Audit](docs/CLOB_PLAN.md); complete security review is not claimed.
+- [x] Fresh copied-source regression: 162 TS and 134 Rust exchange tests; installed frontend dependencies reused, not a clean frontend release check.
+- [x] Pin initial tools and CI; run local/clean tracked-source equivalents. Hosted CI observation remains separate.
+- [x] Test Solidity funding math against original TS/Rust rate vectors and stateful sign mirrors.
+- [x] Test explicit size6/price18/collateral6/raw-base units, capped payouts, funding remainders, partial-close dust and liquidation-risk math.
+- [x] Initial typed module/accounting/nonce contract and disabled manifest parser. Existing v1 onchain-book ABI is reference-only under the new CLOB plan.
+- [ ] Finish remaining semantic/security review as affected components are implemented.
+- [ ] Complete Fuji token/proxy/transfer, oracle/freshness, venue/liquidity and canonicality/operating qualification before dependent public integration.
+- [ ] Resolve missing supplied landing code/artwork redistribution permission before publishing those files; preserve third-party notices.
 
-### Immediate implementation queue
+Evidence: [foundation checks](docs/FOUNDATION_CHECKS.md), [Phase 1 scope](docs/PHASE1_STATUS.md), [read-only Fuji observations](docs/FUJI_QUALIFICATION.md). Do not call public qualification complete from local math tests or token metadata.
 
-1. Finish the remaining source subsystem/semantic review; use the fresh 162 TS / 134 Rust exchange regressions as baseline evidence, not as a security audit.
-2. Complete read-only Fuji base/token/proxy/transfer/oracle/spot/finality qualification and confirm the exact execution scope. USDC candidate metadata/code is partially verified; no asset/route is enabled.
-3. Resolve missing supplied landing-source/artwork redistribution permission before publishing those files; keep the full reference snapshot local in the meantime.
-4. Implement the Phase 2 vault against the reviewed typed interfaces after its applicable foundation decisions pass: exact-delta collateral deposits/owner withdrawals first, then escrow/margins and matching. Public integration remains blocked independently.
-5. Keep each logical change with its tests and a small feature-named commit. Observe hosted CI after an authorized push; current CI evidence is local only.
+## Phase 2 — deterministic offchain matching and market data (P0)
 
-No phase is complete merely because its plan or files exist. Report implementation, external integration, economic admission and public activation separately. New commits use actual execution timestamps; recorded test/chain evidence is never backdated.
+- [ ] One bounded TypeScript in-memory CLOB; limit and price-bounded IOC market orders; buy/sell, price-time/FIFO, multiple orders per level, partials and self-trade prevention.
+- [ ] Owner cancellation, monotonic order nonces/duplicate rejection, explicit expiry and reduce-only capacity checks. Keep reduce-only admission disabled without confirmed position state.
+- [ ] Aggregated depth, BBO, recent provisional trades and sequenced order/book/blocked-settlement events.
+- [ ] Durable append-only hash-checked command journal, single-writer lock, fsync-before-ack and deterministic replay; refuse corruption, missing state, mismatched identity or unknown writes.
+- [ ] EIP-712 order/cancel admission bound to trader, chain and verifying contract; no request-supplied execution targets or private server signer.
+- [ ] Loopback WebSocket snapshot/delta subscriptions and bounded HTTP admission; payload/client/backpressure limits and expiry ticks.
+- [ ] Shared client state reducer detects sequence/stream gaps and resynchronizes from authoritative snapshots.
+- [ ] Tests: FIFO, partial/cancel/expiry/duplicates, determinism, reduce-only limits, journal corruption/restart/competing writers, forgery/domain mismatch, reconnect/gaps and slow clients.
+- [ ] Benchmark pure matching, durable local acknowledgments and WebSocket delivery separately; report p50/p95/p99, throughput, hardware, workload and limitations. Sub-100 ms is a target, not a claim.
 
-## Phase 1 — source baseline and EVM parity foundation (M0–M1)
+**Gate:** reproducible local matcher/transport behavior. All matches remain provisional; no collateral, confirmed positions or onchain transactions are fabricated.
 
-- [x] Locate and read source architecture, current roadmap and complete Avalanche migration plan.
-- [x] Snapshot working source including untracked landing/terminal/contract work; verify file hashes without changing the original.
-- [x] Exclude credentials, environment files, dependency/build directories and private key files.
-- [x] Establish fresh source regressions on the copied baseline: 162 TS tests and 134 Rust exchange tests pass. [Environment and limits](docs/FOUNDATION_CHECKS.md); existing installed frontend dependencies were reused, so this is not a clean frontend release check.
-- [ ] Finish remaining module-by-module semantic/source review. Boundary specifications and passing tests do not substitute for a complete source review.
-- [ ] Preserve third-party notices; resolve landing code/artwork redistribution permission before publishing it.
-- [x] Pin initial EVM tools/compiler target; reuse existing TypeScript/Rust funding references and golden vectors. [Local checkpoint](docs/EVM_FOUNDATION.md); public target verification remains pending.
-- [x] Add pinned, read-only CI for clean install, dependency audit, TS/Python/Solidity tests, Solidity formatting and locked Rust reference checks. Local equivalents pass; hosted GitHub Actions has not been run.
-- [x] Port pure funding controller math with signed-rounding, EMA, deadband, rate/step caps and signal validation parity. Golden vectors, stateful trace mirrors and 1,000 Solidity fuzz runs pass; exchange accrual/settlement is still Phase 2.
-- [x] Port asset units and bilateral risk math; retain size6, price18, collateral6 and wrapped-base18/dust rules. [Equations, bounds and checks](docs/ASSET_AND_RISK_UNITS.md); source accounting vectors and local TS/Foundry checks pass.
-- [x] Freeze initial typed vault/exchange/executor/oracle/reader interfaces, role bindings and execution-disabled manifest schema. [Interface/authority contract](docs/MODULE_CONTRACT.md); selector/parser checks pass. Runtime enforcement remains Phase 2/4; enabled activation needs a separately reviewed schema.
-- [ ] Qualify exact Fuji collateral/base, independent oracle, spot route/version, finality and operational limits. AVAX/WAVAX is a candidate, not an enabled market.
+## Phase 3 — canonical collateral and signed atomic settlement (P0)
 
-**Gate status: still open.** Reproducible local foundation checks pass, including a clean tracked-source archive install/test. Remaining source review, missing landing redistribution permission and unqualified public asset/oracle/spot/finality decisions are not marked complete. [Phase 1 report](docs/PHASE1_STATUS.md). No address placeholders enable execution.
+- [ ] Implement exact-delta ERC-20 custody, caps, reentrancy/donation handling, one canonical liability ledger and fixed-owner withdrawals.
+- [ ] Implement EIP-712 validation, trader identity, chain/deployment domain, nonce invalidation/cancellation, expiry and cumulative partial-fill accounting.
+- [ ] Validate both counterparties' price limits, fees, margin/collateral and position/size/liquidation constraints before atomically applying a matched fill.
+- [ ] Handle cancellation/matching races onchain; duplicates/replays and insufficient margin revert the entire fill. No unrestricted matcher balance/payout authority.
+- [ ] Preserve isolated bilateral capped settlement, fees, partial/full close and liquidation; no basic spot order-book substitute.
+- [ ] Keep unsupported market/reduce-only/strategy order settlement disabled until each corresponding risk constraint is tested.
+- [ ] Durable settlement intent/receipt reconciliation, confirmation policy, replacement/revert/unknown handling and genuine position updates. Never auto-resubmit an unknown outcome.
+- [ ] Foundry forgery/replay/race/insufficient-collateral/conservation/oracle/failure tests and bounded gas/code-size checks.
 
-## Phase 2 — custody and matched exchange port (M2)
+**Gate:** actual local-EVM signed order → atomic funded fill → position/close → owner withdrawal. Successful submission is not confirmation or a filled order.
 
-- [ ] Port canonical same-ledger free balances, strategy allocations, escrow, pair margins and insurance.
-- [ ] Replace NEP-141 transfer-call/callback custody with exact-delta ERC-20 deposits and synchronous owner-only withdrawals.
-- [ ] Reject fee-on-transfer/rebasing behavior; preserve donation/surplus separation and reentrancy protection.
-- [ ] Port bounded price-time matching, self-trade prevention, partial fills, post-only/IOC/reduce-only, expiry and nonces.
-- [ ] Port bilateral collateral-capped settlement, partial/full close, opening fees and liquidation distribution.
-- [ ] Port funding accrual/index/remainders, payer caps, epoch/revision replay protection, oracle/rate expiry and no backfill.
-- [ ] Verify unit/fuzz/conservation/invariant tests, code size and worst-case gas without unlimited-contract-size bypasses.
+## Phase 4 — existing terminal, adaptive funding and lifecycle (P0d/P1)
 
-**Gate:** Solidity behavior matches source semantics; liabilities reconcile to actual custody.
+- [ ] Preserve existing landing/Trade layout/branding; no standalone book demo or terminal rebuild.
+- [ ] Wire EVM wallet/chain/account invalidation, approvals/deposits and typed contract reads/mutations.
+- [ ] Connect live depth/BBO/spread/trades, limit/market controls and order status with explicit provisional/pending/confirmed/reverted states.
+- [ ] Distinguish last traded price, independent index and validated mark; matcher cannot unilaterally control funding or liquidation.
+- [ ] Apply baseline/adaptive math, smoothing/caps, oracle freshness, epochs/rate expiry, index settlement and payment conservation. Never use matched long-OI-minus-short-OI as the primary premium signal.
+- [ ] Show actual funding, positions, margin, costs and real explorer links; unavailable sources fail closed, not simulated success.
+- [ ] Test real local wallet/browser flow, sequence reconnect/resync, cancellation races, stale data, keyboard/mobile/error states.
 
-## Phase 3 — Avalanche wallet, contract and API integration (M3)
+## Phase 5 — Guardian and delta-neutral Autopilot (P1/P2)
 
-The landing page and terminal already exist. They are source assets to preserve, not new deliverables. No landing-page rebuild, terminal redesign or replacement frontend is planned.
+- [ ] Reuse conservative opportunity/capital/sizing, risk/watchdog and durable decision/replay semantics behind EVM-aware adapters; do not bypass PAPER-only source guards.
+- [ ] Genuine independent spot/perp quotes, liquidity/collateral checks, cost-aware bounded sizing and scoped/revocable onchain owner mandates.
+- [ ] Real pending/confirmed fill reconciliation, partial-leg detection, residual delta/margin monitoring and policy-authorized repairs only.
+- [ ] Unknown outcomes pause/reconcile; no blind retry or invented atomicity. Test counterparty exits, funding reversal, venue/leg failures and exhausted budgets.
+- [ ] Owner pause/revoke/cancel/close/recover/settled-withdraw controls, fixed recipients and actual inventory ownership.
+- [ ] Add Autopilot/Guardian status and decision receipts inside existing Trade. No autonomous live hedge claim until both genuine legs are verified.
 
-- [ ] Preserve existing landing, chart/book/ticket, Markets, Portfolio, Leaderboard and settings while replacing only chain-specific integration points.
-- [ ] Replace NEAR wallet/callback handling with EVM connection, explicit Fuji switching and account/chain invalidation.
-- [ ] Replace named accounts/NEAR RPC with address validation, versioned ABIs and block-pinned chain reads.
-- [ ] Wire exact approvals, deposits, order/cancel/close and owner withdrawals; keep AVAX gas separate from collateral/inventory.
-- [ ] Preserve read-only API endpoints; reject wrong chain, unknown deployment, stale data and request-provided targets.
-- [ ] Show actual receipt/fill states, funding units/history, errors and Avalanche explorer links; no mock success fallback.
-- [ ] Update branding/market symbols only where backed by configuration; preserve license notices and demo isolation.
-- [ ] Pass local wallet-driven browser lifecycle, keyboard/mobile/accessibility and existing UI regressions.
+## Phase 6 — capped Fuji verification and release
 
-**Gate:** actual local-EVM deposit → matched trade → funding/close → owner withdrawal in the preserved terminal.
+- [ ] Finish asset/oracle/spot/finality/rights gates; distinguish implementation, integration availability, economic eligibility and activation.
+- [ ] Separate bounded approval before any public deployment/signing/spending: identities/actions, finite funds/gas/exposure, expiry and stop/recovery plan. Mainnet stays disabled.
+- [ ] Fresh paused Fuji C-Chain deployment (`43113`), code/role/module/token/ABI verification and safe deposit/withdrawal first.
+- [ ] Real wallet signed orders, settlement, funding, close/liquidation where safely applicable, hedge/recovery/revoke/withdraw and restart proof with actual receipts/token deltas.
+- [ ] Clean installation, CI/security/dependency/secret review, existing-terminal browser regression and reproducible benchmark/evidence report.
+- [ ] Reconcile original NEAR liabilities/pending state under original code; never reset or silently transfer funded state. Preserve immutable labeled history.
+- [ ] Publish accurate setup, bounded deployment/verification instructions, safe stop/recovery, demo and implemented-vs-pending README to the confirmed repository only.
 
-## Phase 4 — strategies and durable EVM execution (M4)
-
-- [ ] Port isolated strategy lifecycle, owner allocation/release, pause/close and fixed-recipient exits.
-- [ ] Replace NEAR restricted keys with contract-enforced owner/executor/chain/deployment/route authority.
-- [ ] Bind revisions, expiry, permissions, exposure, reserve/margin, costs/turnover, cooldown and canonical action nonces.
-- [ ] Preserve single-capital budgeting and conservative collectible-funding admission; no positive-rate-only entries.
-- [ ] Keep any owner-authorized execution-validation session separate from investment authority.
-- [ ] Port durable intents/journals to a new chain/deployment-aware namespace; never rewrite or replay NEAR journals.
-- [ ] Test revocation/replay, forbidden payouts, competing workers, crash/restart and unknown/replaced/reverted transaction reconciliation.
-
-**Gate:** adversarial authorization and recovery tests pass; delegates cannot withdraw or expand authority.
-
-## Phase 5 — spot, hedge composition and Guardian (M5–M6)
-
-- [ ] Qualify one real Avalanche spot route using its actual protocol quoter; never relabel Ref math as LFJ Liquidity Book math.
-- [ ] Bind router/version/path/assets, allowances, deadlines and output floors; reconcile actual base output and dust.
-- [ ] Compose real spot/perp legs with tested all-or-nothing rollback, or explicit partial-leg state and bounded recovery.
-- [ ] Preserve the four-action batch limit, item-level authorization and all-in cost accounting.
-- [ ] Reconnect funding snapshots, opportunity/sizing, Guardian policies, shared budgets and one-decision-per-epoch controls.
-- [ ] Monitor actual fills, counterparty exits, margin, residual delta/time, rate expiry and exhausted budgets; no blind re-entry.
-- [ ] Finish the source's incomplete Vault/Hedge controls inside Trade using real actions and independent leg status.
-- [ ] Pass real-runtime failure/conservation matrix, both funding signs, seeded scenarios and restart reconciliation.
-
-**Gate:** genuine execution and owner recovery proven in the stated local/fork environment; no PAPER path masquerades as live execution.
-
-## Phase 6 — capped Fuji validation, cutover and release (M7–M8)
-
-- [ ] Obtain a bounded Fuji signing plan: accounts/actions, assets, funds/gas/exposure caps, expiry and stop/recovery conditions. Source NEAR spending authorization does not transfer to Fuji.
-- [ ] Deploy fresh contracts paused/default-disabled; verify bytecode, ABI, module bindings, assets, roles and finite caps.
-- [ ] Validate small deposits/owner withdrawals, matched trades, actual funding conservation, selected spot/hedge and owner exits.
-- [ ] Prove pause/revoke/recovery and successful-execution restart using real receipts and token deltas.
-- [ ] Complete clean-install/build/CI, dependency/secret/security checks and real browser-wallet verification.
-- [ ] Reconcile existing NEAR liabilities and pending intents under original code; never reset/sweep funded state or mint destination credits from source snapshots.
-- [ ] Retire active NEAR dependencies only after parity/cutover; preserve labeled legacy evidence and owner recovery.
-- [ ] Publish accurate setup/operations, public evidence, costs, unresolved inventory/liabilities and safe-stop procedures.
-
-**Gate:** reconciled public Fuji lifecycle with no unresolved custody/security blocker. A deployment hash, rejected opportunity or local/fork test does not pass the public gate.
-
-## Execution rules
-
-Use Ponytail; make small complete changes with directly related tests and inspected commits. Keep implementation parity, integration availability, economic eligibility and public activation separate. Mainnet/M9, GMX replacement, rolling carry and pooled shares are out of scope unless separately approved. Do not inherit source roadmap checkmarks as Avalanche completion.
+**Gate:** reconciled genuine Fuji lifecycle with no unresolved custody/security blocker. PAPER, local VM and fork results remain distinct. Centralized matching is disclosed. No profitability, liquidity, latency or decentralization claim without applicable evidence.
