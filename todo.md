@@ -4,6 +4,29 @@ Authoritative source: the complete NEARFlow working tree, including dirty/untrac
 
 Local reference: `legacy/nearflow/` (ignored, not a published runtime). [Baseline and limitations](docs/NEARFLOW_BASELINE.md).
 
+## Phase sequence and current status
+
+| Phase | Deliverable | Dependencies | Status / acceptance |
+| --- | --- | --- | --- |
+| 1 | Source parity, units/risk/funding math, interfaces and qualification | Existing NEARFlow baseline | **In progress:** source snapshot and pure funding-math parity pass; remaining tasks below |
+| 2 | Solidity vault, matched exchange, funding settlement and liquidation | Reviewed Phase 1 accounting/interfaces | Pending; custody conservation, fuzz/invariants and bounded gas must pass |
+| 3 | Existing UI connected to EVM wallets, contracts and read API | Phase 2 ABIs/local contracts | Pending; actual local-wallet deposit/trade/close/withdraw flow must pass |
+| 4 | Isolated strategy authority and durable EVM transport | Phase 2 custody/exchange; reviewed policy schema | Pending; authorization, replay/revoke and transaction-recovery tests must pass |
+| 5 | Qualified spot integration, real hedge composition and Guardian | Phase 4 plus qualified venue/route | Pending; real token/position deltas, failure recovery and runtime matrix must pass |
+| 6 | Capped public Fuji lifecycle, safe cutover and release | All applicable implementation/integration gates plus bounded signing authorization | Pending; public receipts and reconciled custody/owner exits required |
+
+Implementation order is 1 → 2 → 3 → 4 → 5 → 6. Read-only asset/oracle/venue qualification runs alongside local implementation; it cannot be deferred past the integration it enables. Existing UI preservation can proceed against reviewed schemas without claiming wallet/execution completion. An unavailable Fuji route blocks public hedge validation, not unrelated local parity work.
+
+### Immediate implementation queue
+
+1. Port source asset-unit conversions and bilateral risk/payout math, including signed rounding, partial-close dust and capped gains/losses; add shared reference and boundary/property tests.
+2. Freeze the typed vault/exchange/executor/oracle/reader call graph, canonical liability buckets and role/nonce ownership; test the trust boundaries as implementations land.
+3. Add reproducible CI for current TS/Rust reference, Solidity and network-tool checks; establish fresh source regression results separately from EVM results.
+4. Continue read-only Fuji asset/oracle/venue/finality qualification; record exact verified identities and failures before binding integrations.
+5. Start Phase 2 with exact-delta collateral deposits and authenticated owner withdrawals, then escrow/margins and matching. Keep each logical change with its tests and a small commit.
+
+No phase is complete merely because its plan or files exist. Report implementation, external integration, economic admission and public activation separately. New commits use actual execution timestamps; recorded test/chain evidence is never backdated.
+
 ## Phase 1 — source baseline and EVM parity foundation (M0–M1)
 
 - [x] Locate and read source architecture, current roadmap and complete Avalanche migration plan.
