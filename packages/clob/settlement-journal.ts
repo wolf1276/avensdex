@@ -149,7 +149,8 @@ interface Stored {
 }
 type SettledStatus = Exclude<SettlementStatus, 'intent' | 'broadcast'>;
 function transitionAllowed(from: SettlementStatus, to: SettlementStatus): boolean {
-  if (to === 'broadcast' || to === 'intent' || from === 'intent') return false;
+  if (to === 'broadcast' || to === 'intent') return false;
+  if (from === 'intent') return to === 'unknown';
   if (from === 'broadcast' || from === 'pending' || from === 'unknown') return true;
   // Rechecking a canonical receipt may increase confirmations or downgrade after head rollback.
   if (from === 'reverted' || from === 'confirmed') return to === from || to === 'pending' || to === 'reorged' || to === 'unknown';
@@ -206,6 +207,11 @@ function checkBroadcastEvent(stored: Stored, input: unknown) {
 function uniqueIntent(records: Map<string, Stored>, intent: SettlementIntent) {
   for (const stored of records.values()) {
     if (stored.intent.sender === intent.sender && stored.intent.nonce === intent.nonce) throw Error('SETTLEMENT_NONCE_ALREADY_RESERVED');
+    if (stored.intent.pairId === intent.pairId && stored.status !== 'reverted') throw Error('SETTLEMENT_PAIR_ALREADY_RESERVED');
+    if (stored.status !== 'confirmed' && stored.status !== 'reverted') {
+      const hashes = [stored.intent.longOrderHash, stored.intent.shortOrderHash];
+      if (hashes.includes(intent.longOrderHash) || hashes.includes(intent.shortOrderHash)) throw Error('SETTLEMENT_RECONCILE_ORDER_FIRST');
+    }
   }
 }
 function uniqueBroadcast(records: Map<string, Stored>, intentId: string, txHash: string) {
@@ -358,7 +364,7 @@ export class SettlementJournal {
       startupJournal = journal;
       // A persisted confirmation is historical evidence, not proof of canonicality after restart.
       for (const [id, stored] of records) {
-        if (stored.status !== 'intent' && stored.status !== 'unknown') {
+        if (stored.status !== 'unknown') {
           journal.#transition(id, 'unknown', 'RESTART_RECONCILIATION_REQUIRED', stored.receipt, null, null);
         }
       }

@@ -125,7 +125,8 @@ test('single writer lock and crash recovery never steal a held lock', t => {
   unlinkSync(join(crashed, 'writer.lock')); // Test-only operator action after confirming the child exited.
   const restored = open(crashed, localMockReader());
   assert.equal(restored.intents().length, 1);
-  assert.equal(restored.intents()[0].status, 'intent');
+  assert.equal(restored.intents()[0].status, 'unknown');
+  assert.equal(restored.intents()[0].reason, 'RESTART_RECONCILIATION_REQUIRED');
   restored.close();
 });
 
@@ -155,9 +156,9 @@ test('missing, corrupt, truncated, rebound and policy-changed journals fail clos
 test('restart replays confirmed, replacement, reverted and unknown transitions', async t => {
   const dir = directory(t), reader = localMockReader();
   const a = intent({ nonce: '1', longOrderHash: hex32('6'), shortOrderHash: hex32('7') });
-  const b = intent({ nonce: '2', longOrderHash: hex32('8'), shortOrderHash: hex32('9') });
-  const c = intent({ nonce: '3', longOrderHash: hex32('a'), shortOrderHash: hex32('b') });
-  const d = intent({ nonce: '4', longOrderHash: hex32('c'), shortOrderHash: hex32('e') });
+  const b = intent({ pairId: '2', nonce: '2', longOrderHash: hex32('8'), shortOrderHash: hex32('9') });
+  const c = intent({ pairId: '3', nonce: '3', longOrderHash: hex32('a'), shortOrderHash: hex32('b') });
+  const d = intent({ pairId: '4', nonce: '4', longOrderHash: hex32('c'), shortOrderHash: hex32('e') });
   const txA = hex32('f'), txB1 = hex32('1'), txB2 = hex32('2'), txC = hex32('3'), txD = hex32('6');
   reader.state.receipt = tx => tx === txA ? successReceipt(a, { txHash: txA })
     : tx === txC ? { ...successReceipt(c, { txHash: txC }), status: 'reverted', logs: [] } : null;
@@ -371,7 +372,8 @@ test('nonce zero is valid; conflicting payloads cannot reuse a reserved sender n
   const before = lines(dir).length;
   assert.throws(() => j.recordIntent(intent({ nonce: '0', size6: '11' })), /NONCE_ALREADY_RESERVED/);
   assert.equal(lines(dir).length, before);
-  const second = j.recordIntent(intent({ nonce: '1' }));
+  assert.throws(() => j.recordIntent(intent({ nonce: '1' })), /PAIR_ALREADY_RESERVED/);
+  const second = j.recordIntent(intent({ pairId: '2', nonce: '1', longOrderHash: hex32('6'), shortOrderHash: hex32('7') }));
   assert.throws(() => j.recordBroadcast(second.intentId, { txHash, sender, nonce: '1' }), /TX_ALREADY_RESERVED/);
   j.close();
   const restored = open(dir, reader);
@@ -430,4 +432,57 @@ test('head hash changing during receipt verification prevents confirmation', asy
   assert.equal(result.reason, 'CANONICAL_HEAD_CHANGED');
   assert.deepEqual(j.confirmedFills(), []);
   j.close();
+});
+
+
+test('restart pauses intents even when the crash may have occurred before recording a submission hash', async t => {
+  const dir = directory(t), reader = localMockReader();
+  let j = open(dir, reader);
+  const r = j.recordIntent(intent());
+  j.close(); // Represents crash-after-dispatch/before-hash ambiguity; no transaction is fabricated.
+  j = open(dir, reader);
+  assert.equal(j.intent(r.intentId).status, 'unknown');
+  assert.equal(j.intent(r.intentId).reason, 'RESTART_RECONCILIATION_REQUIRED');
+  assert.equal(j.recordIntent(intent()).intentId, r.intentId);
+  assert.equal(j.intent(r.intentId).status, 'unknown');
+  await assert.rejects(j.reconcile(r.intentId), /INTENT_NOT_BROADCAST/);
+  assert.equal(reader.state.receiptCalls, 0);
+  assert.deepEqual(j.confirmedFills(), []);
+  j.close();
+});
+
+
+test('unknown outcomes block order retries even with a new nonce or predicted pair ID', async t => {
+  const i = intent(), reader = localMockReader(), j = open(directory(t), reader);
+  const r = j.recordIntent(i);
+  j.recordBroadcast(r.intentId, { txHash, sender, nonce: '7' });
+  await j.reconcile(r.intentId);
+  assert.equal(j.intent(r.intentId).status, 'unknown');
+  assert.throws(() => j.recordIntent(intent({ nonce: '8' })), /PAIR_ALREADY_RESERVED/);
+  assert.throws(() => j.recordIntent(intent({ nonce: '8', pairId: '2' })), /RECONCILE_ORDER_FIRST/);
+  reader.state.receipt = successReceipt(i);
+  await j.reconcile(r.intentId);
+  assert.equal(j.intent(r.intentId).status, 'confirmed');
+  assert.equal(j.recordIntent(intent({ nonce: '8', pairId: '2' })).pairId, '2');
+  j.close();
+});
+
+
+test('an uncertain startup reconciliation checkpoint retains the crash lock', async t => {
+  const dir = directory(t), i = intent(), reader = localMockReader({ receipt: successReceipt(i) });
+  const j = open(dir, reader), r = j.recordIntent(i);
+  j.recordBroadcast(r.intentId, { txHash, sender, nonce: '7' });
+  await j.reconcile(r.intentId);
+  j.close();
+  const moduleUrl = new URL('./settlement-journal.ts', import.meta.url).href;
+  const script = `import fs from 'node:fs'; import {syncBuiltinESMExports} from 'node:module';
+    import assert from 'node:assert/strict'; import {SettlementJournal} from ${JSON.stringify(moduleUrl)};
+    const original=fs.fsyncSync;let calls=0;fs.fsyncSync=fd=>{if(++calls===2)throw Error('FAULT');return original(fd)};
+    syncBuiltinESMExports();
+    assert.throws(()=>SettlementJournal.open(${JSON.stringify(dir)},${JSON.stringify(identity)},{confirmations:1,reader:{
+      getReceipt:async()=>null,getCanonicalHead:async()=>null,getCanonicalBlockHash:async()=>null}}),/UNKNOWN_SETTLEMENT_JOURNAL_WRITE/);`;
+  const child = spawnSync(process.execPath, ['--experimental-strip-types', '--input-type=module', '-e', script], { encoding: 'utf8' });
+  assert.equal(child.status, 0, child.stderr);
+  assert(existsSync(join(dir, 'writer.lock')));
+  assert.throws(() => open(dir, reader), /EEXIST/);
 });
