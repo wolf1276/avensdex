@@ -10,7 +10,7 @@ Local reference: `legacy/nearflow/` (ignored, not a published runtime). [Baselin
 | --- | --- | --- | --- |
 | 1 | Source parity, units/risk/funding math, interfaces and qualification | Existing NEARFlow baseline | **In progress:** source snapshot and pure funding-math parity pass; remaining tasks below |
 | 2 | Solidity vault, matched exchange, funding settlement and liquidation | Reviewed Phase 1 accounting/interfaces | Pending; custody conservation, fuzz/invariants and bounded gas must pass |
-| 3 | Existing UI connected to EVM wallets, contracts and read API | Phase 2 ABIs/local contracts | Pending; actual local-wallet deposit/trade/close/withdraw flow must pass |
+| 3 | Avalanche wallet/ABI/API integration into the existing terminal; no UI rebuild | Phase 2 ABIs/local contracts | Pending; actual local-wallet deposit/trade/close/withdraw flow must pass |
 | 4 | Isolated strategy authority and durable EVM transport | Phase 2 custody/exchange; reviewed policy schema | Pending; authorization, replay/revoke and transaction-recovery tests must pass |
 | 5 | Qualified spot integration, real hedge composition and Guardian | Phase 4 plus qualified venue/route | Pending; real token/position deltas, failure recovery and runtime matrix must pass |
 | 6 | Capped public Fuji lifecycle, safe cutover and release | All applicable implementation/integration gates plus bounded signing authorization | Pending; public receipts and reconciled custody/owner exits required |
@@ -54,9 +54,11 @@ No phase is complete merely because its plan or files exist. Report implementati
 
 **Gate:** Solidity behavior matches source semantics; liabilities reconcile to actual custody.
 
-## Phase 3 — existing terminal, wallet and API migration (M3)
+## Phase 3 — Avalanche wallet, contract and API integration (M3)
 
-- [ ] Reuse landing, chart/book/ticket, Markets, Portfolio, Leaderboard and settings; do not redesign or rebuild them.
+The landing page and terminal already exist. They are source assets to preserve, not new deliverables. No landing-page rebuild, terminal redesign or replacement frontend is planned.
+
+- [ ] Preserve existing landing, chart/book/ticket, Markets, Portfolio, Leaderboard and settings while replacing only chain-specific integration points.
 - [ ] Replace NEAR wallet/callback handling with EVM connection, explicit Fuji switching and account/chain invalidation.
 - [ ] Replace named accounts/NEAR RPC with address validation, versioned ABIs and block-pinned chain reads.
 - [ ] Wire exact approvals, deposits, order/cancel/close and owner withdrawals; keep AVAX gas separate from collateral/inventory.
