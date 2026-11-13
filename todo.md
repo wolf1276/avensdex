@@ -31,7 +31,7 @@ Evidence: [foundation checks](docs/FOUNDATION_CHECKS.md), [Phase 1 scope](docs/P
 - [x] Loopback WebSocket snapshot/delta subscriptions, payload/client/backpressure limits and durable expiry ticks. [Service/reducer scope](docs/CLOB_SERVICE.md). HTTP mutation/admission remains 503 until genuine deployment/signature gates exist, not an unsigned fallback.
 - [x] Shared browser-safe client reducer detects sequence/stream gaps, freezes stale state and requests authoritative resynchronization. Actual existing-terminal wiring remains Phase 4.
 - [x] Thirty-one tests cover core FIFO/partials/cancel/expiry/nonces/reduce-only, journal corruption/restart/competing writers/identity mismatch, real loopback delivery/reconnect/gaps and bounded clients. Cryptographic forgery and signed-domain tests remain under the pending EIP-712 task; no signature-validation claim from owner-string checks.
-- [ ] Benchmark pure matching, durable local acknowledgments and WebSocket delivery separately; report p50/p95/p99, throughput, hardware, workload and limitations. Sub-100 ms is a target, not a claim.
+- [x] Benchmark pure matching, durable local acknowledgments and WebSocket delivery separately; publish [measured clean-revision quantiles/throughput/hardware/methodology](docs/CLOB_BENCHMARK.md), including the slower smoke-run caveat. Cryptographic HTTP admission, browser/WAN/fanout and onchain finality remain unmeasured; no public performance claim.
 
 **Gate:** reproducible local matcher/transport behavior. All matches remain provisional; no collateral, confirmed positions or onchain transactions are fabricated.
 

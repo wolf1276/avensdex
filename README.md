@@ -40,6 +40,8 @@ npm run test:clob
 npm run bench:clob
 ```
 
+[Measured local benchmark report](docs/CLOB_BENCHMARK.md): core matching, durable acknowledgments and loopback delivery are separate measurements—not Fuji settlement, authenticated admission or profitability evidence.
+
 ## Run qualification checks
 
 Requires Python 3.12; no dependencies or wallet needed.
