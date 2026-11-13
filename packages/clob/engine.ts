@@ -29,6 +29,7 @@ export interface State {
   positions: Positions | null; pendingReductions: Map<string, bigint>;
 }
 export const LIMITS = { activeOrders: 256, retainedOrders: 8704, traders: 1000, pendingMatches: 4096 } as const;
+export const MAX_FEED_BYTES = 8 * 1024 * 1024;
 const orderKeys = ['id', 'trader', 'nonce', 'marketId', 'side', 'kind', 'size6', 'limitPrice18', 'expiry', 'reduceOnly', 'postOnly', 'ioc'];
 export function exact(value: unknown, keys: readonly string[]): asserts value is Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)

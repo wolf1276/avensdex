@@ -13,13 +13,19 @@
     "test:funding": "node --experimental-strip-types --test packages/funding/preview.test.ts",
     "test:funding:rust": "cargo test --locked --manifest-path packages/funding/reference/Cargo.toml",
     "test:protocol": "node --experimental-strip-types --test packages/protocol/*.test.mjs",
-    "test:clob": "node --experimental-strip-types --test packages/clob/*.test.mjs",
+    "test:clob": "node --experimental-strip-types --test packages/clob/*.test.mjs services/clob/*.test.mjs",
+    "clob:serve": "node --experimental-strip-types services/clob/start.ts",
+    "bench:clob": "node --experimental-strip-types scripts/benchmark-clob.mjs",
     "test:network": "python3 -m unittest discover -s scripts -t . -v",
     "test:contracts": "forge test --root contracts/evm",
     "test": "npm run typecheck && npm run test:funding && npm run test:protocol && npm run test:clob && npm run test:network && npm run test:contracts"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
+    "@types/ws": "8.18.2",
     "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "ws": "8.23.0"
   }
 }

@@ -28,9 +28,9 @@ Evidence: [foundation checks](docs/FOUNDATION_CHECKS.md), [Phase 1 scope](docs/P
 - [x] Aggregated depth, BBO, recent provisional trades and sequenced order/book/blocked-settlement events.
 - [x] Durable append-only hash-checked command journal, single-writer lock, fsync-before-ack and deterministic replay; refuse corruption, missing state, mismatched identity or unknown writes. Sixteen core/journal tests pass; no broadcast or settlement exists yet.
 - [ ] EIP-712 order/cancel admission bound to trader, chain and verifying contract; no request-supplied execution targets or private server signer.
-- [ ] Loopback WebSocket snapshot/delta subscriptions and bounded HTTP admission; payload/client/backpressure limits and expiry ticks.
-- [ ] Shared client state reducer detects sequence/stream gaps and resynchronizes from authoritative snapshots.
-- [ ] Tests: FIFO, partial/cancel/expiry/duplicates, determinism, reduce-only limits, journal corruption/restart/competing writers, forgery/domain mismatch, reconnect/gaps and slow clients.
+- [x] Loopback WebSocket snapshot/delta subscriptions, payload/client/backpressure limits and durable expiry ticks. [Service/reducer scope](docs/CLOB_SERVICE.md). HTTP mutation/admission remains 503 until genuine deployment/signature gates exist, not an unsigned fallback.
+- [x] Shared browser-safe client reducer detects sequence/stream gaps, freezes stale state and requests authoritative resynchronization. Actual existing-terminal wiring remains Phase 4.
+- [x] Thirty-one tests cover core FIFO/partials/cancel/expiry/nonces/reduce-only, journal corruption/restart/competing writers/identity mismatch, real loopback delivery/reconnect/gaps and bounded clients. Cryptographic forgery and signed-domain tests remain under the pending EIP-712 task; no signature-validation claim from owner-string checks.
 - [ ] Benchmark pure matching, durable local acknowledgments and WebSocket delivery separately; report p50/p95/p99, throughput, hardware, workload and limitations. Sub-100 ms is a target, not a claim.
 
 **Gate:** reproducible local matcher/transport behavior. All matches remain provisional; no collateral, confirmed positions or onchain transactions are fabricated.

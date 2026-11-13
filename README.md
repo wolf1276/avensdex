@@ -19,7 +19,7 @@ Initial development targets Avalanche C-Chain Fuji. Mainnet execution is outside
 
 The complete NEARFlow working-source baseline has been copied locally and hash-verified. Its existing architecture, UI and migration plan are the implementation basis; follow [`todo.md`](todo.md) for the six phases and current tasks. See [baseline provenance and publication limits](docs/NEARFLOW_BASELINE.md).
 
-A [deterministic offchain CLOB and crash-safe command journal](docs/CLOB_ENGINE.md), read-only Fuji network checks, Solidity funding/units/risk math, typed module interfaces, an execution-disabled manifest parser and pinned CI are implemented. Local reference/property/parser checks pass; see [Phase 1 results and open gates](docs/PHASE1_STATUS.md). The full EVM port is not complete: signed public admission, WebSocket/terminal wiring, collateral/settlement contracts and live Guardian/Autopilot execution are pending. All matches are provisional/blocked, never confirmed positions. No deployed Avalanche application or public contract execution is claimed. No live trading, yield or production-readiness claims are made.
+A [deterministic offchain CLOB and crash-safe command journal](docs/CLOB_ENGINE.md), [sequenced loopback WebSocket service and client resynchronization reducer](docs/CLOB_SERVICE.md), read-only Fuji network checks, Solidity funding/units/risk math, typed module interfaces, an execution-disabled manifest parser and pinned CI are implemented. Local reference/property/parser checks pass; see [Phase 1 results and open gates](docs/PHASE1_STATUS.md). The full EVM port is not complete: signed public admission, existing-terminal wiring, collateral/settlement contracts and live Guardian/Autopilot execution are pending. All matches are provisional/blocked, never confirmed positions. No deployed Avalanche application or public contract execution is claimed. No live trading, yield or production-readiness claims are made.
 
 ## Run local foundation checks
 
@@ -29,6 +29,15 @@ Requires the pinned Node/npm, Foundry/Solidity and Rust toolchains listed in [fo
 npm ci --ignore-scripts
 npm test
 npm run test:funding:rust
+```
+
+## Run market data
+
+See [safe storage/start/restart instructions](docs/CLOB_SERVICE.md). The current service is read-only and returns 503 for trading readiness and all network writes; it cannot invent liquidity or confirmed positions.
+
+```sh
+npm run test:clob
+npm run bench:clob
 ```
 
 ## Run qualification checks
