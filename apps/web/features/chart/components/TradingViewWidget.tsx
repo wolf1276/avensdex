@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useId, useRef, useState } from "react";
+import { memo, useLayoutEffect, useId, useRef, useState } from "react";
 
 // Renders TradingView's Advanced Chart (the real widget engine, loaded from
 // tv.js). Data, indicators, drawing tools and chart types are all handled by
@@ -72,7 +72,8 @@ export const TradingViewWidget = memo(function TradingViewWidget({
   const [error, setError] = useState<string | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
 
-  useEffect(() => {
+  // TradingView needs its DOM attached while disposing; passive cleanup runs after React removes it.
+  useLayoutEffect(() => {
     let cancelled = false;
     const host = hostRef.current;
     if (!host) return;
@@ -171,7 +172,9 @@ export const TradingViewWidget = memo(function TradingViewWidget({
       cancelled = true;
       clearTimeout(frameTimer); observer.disconnect();
       frames.forEach(frame => { frame.removeEventListener('load', loaded); frame.removeEventListener('error', failed); });
-      try { widget?.remove?.(); } finally { host.innerHTML = ''; }
+      try { widget?.remove?.(); }
+      catch { /* A vendor may already have removed its own iframe; never crash the surrounding route. */ }
+      finally { host.replaceChildren(); }
     };
   }, [symbol, interval, chartStyle, mountId, retryNonce]);
 
