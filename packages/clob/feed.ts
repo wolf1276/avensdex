@@ -1,5 +1,5 @@
 // Browser-safe sequence reducer for the existing terminal. No signing, balances or execution authority.
-import { decimal, exact, trader, LIMITS, MAX_FEED_BYTES, type Event, type StoredOrder, type Trade, type Positions, type Matcher } from './engine.ts';
+import { decimal, exact, trader, LIMITS, MAX_FEED_BYTES, MAX_RETAINED_TRADES, terminalSettlement, settlementTransitionAllowed, type Event, type StoredOrder, type Trade, type Positions, type Matcher } from './engine.ts';
 export type Snapshot = ReturnType<Matcher['snapshot']>;
 const id = (v: unknown) => { if (typeof v !== 'string' || !/^[a-zA-Z0-9:_-]{1,100}$/.test(v)) throw Error('INVALID_ID'); };
 function integer(v: unknown, min = 0, max = Number.MAX_SAFE_INTEGER): asserts v is number {
@@ -21,10 +21,14 @@ function checkOrder(input: unknown): StoredOrder {
   return structuredClone(input) as unknown as StoredOrder;
 }
 function checkTrade(input: unknown): Trade {
-  exact(input, ['id', 'maker', 'taker', 'makerTrader', 'takerTrader', 'side', 'price18', 'size6', 'settlement']);
+  const hasIntent = !!input && typeof input === 'object' && Object.hasOwn(input, 'settlementIntentId');
+  exact(input, ['id', 'maker', 'taker', 'makerTrader', 'takerTrader', 'side', 'price18', 'size6', 'settlement', ...(hasIntent ? ['settlementIntentId'] : [])]);
+  if (hasIntent && (typeof input.settlementIntentId !== 'string' || !/^[0-9a-f]{64}$/.test(input.settlementIntentId))) throw Error('INVALID_SETTLEMENT_INTENT');
   id(input.id); id(input.maker); id(input.taker); trader(input.makerTrader); trader(input.takerTrader);
   decimal(input.size6, 10n ** 15n); decimal(input.price18, 10n ** 27n);
-  if (!['buy', 'sell'].includes(input.side as string) || input.settlement !== 'blocked'
+  if (!['buy', 'sell'].includes(input.side as string)
+    || !['blocked', 'confirmed', 'reverted', 'unknown', 'pending', 'reorged'].includes(input.settlement as string)
+    || (input.settlement !== 'blocked' && !hasIntent)
     || input.makerTrader === input.takerTrader || input.maker === input.taker) throw Error('INVALID_TRADE');
   return structuredClone(input) as unknown as Trade;
 }
@@ -55,7 +59,7 @@ function checkSnapshot(input: unknown, marketId: number): Snapshot {
     'pendingSettlements', 'settlement', 'confirmedPositionsAvailable', 'confirmedPositions']);
   if (typeof input.streamId !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(input.streamId) || input.marketId !== marketId
     || input.settlement !== 'unavailable' || typeof input.confirmedPositionsAvailable !== 'boolean') throw Error('INVALID_SNAPSHOT_IDENTITY');
-  integer(input.seq); integer(input.clock, 0, 4_294_967_295); integer(input.pendingSettlements, 0, LIMITS.pendingMatches);
+  integer(input.seq); integer(input.clock, 0, 4_294_967_295); integer(input.pendingSettlements, 0, MAX_RETAINED_TRADES);
   for (const [value, max] of [[input.bids, 256], [input.asks, 256], [input.orders, LIMITS.retainedOrders], [input.trades, 128]] as const) {
     if (!Array.isArray(value) || value.length > max) throw Error('SNAPSHOT_CAPACITY');
   }
@@ -128,13 +132,35 @@ export class MarketDataFeed {
           s.bestBid = data.bestBid as string | null; s.bestAsk = data.bestAsk as string | null; break;
         }
         case 'trade': {
-          const trade = checkTrade(data); if (s.trades.some(t => t.id === trade.id)) return this.gap();
+          const trade = checkTrade(data); if (trade.settlement !== 'blocked' || s.trades.some(t => t.id === trade.id)) return this.gap();
           s.trades.push(trade); s.trades = s.trades.slice(-128); s.pendingSettlements++;
           if (s.pendingSettlements > LIMITS.pendingMatches) return this.gap(); break;
         }
         case 'settlement':
           exact(data, ['tradeId', 'status', 'reason']); id(data.tradeId);
           if (data.status !== 'blocked' || data.reason !== 'SETTLEMENT_UNAVAILABLE') return this.gap(); break;
+        case 'settlementOutcome': {
+          exact(data, ['tradeId', 'intentId', 'previousStatus', 'status', 'reason', 'pendingSettlements']);
+          id(data.tradeId);
+          if (typeof data.intentId !== 'string' || !/^[0-9a-f]{64}$/.test(data.intentId)
+            || !['blocked', 'confirmed', 'reverted', 'unknown', 'pending', 'reorged'].includes(data.previousStatus as string)
+            || !['confirmed', 'reverted', 'unknown', 'pending', 'reorged'].includes(data.status as string)
+            || (data.reason !== null && (typeof data.reason !== 'string' || !/^[A-Z0-9_]{1,80}$/.test(data.reason)))) return this.gap();
+          const previous = data.previousStatus as Trade['settlement'], status = data.status as Trade['settlement'];
+          if (!settlementTransitionAllowed(previous, status)) return this.gap();
+          integer(data.pendingSettlements, 0, MAX_RETAINED_TRADES);
+          const expected = s.pendingSettlements + Number(!terminalSettlement(status)) - Number(!terminalSettlement(previous));
+          if (expected !== data.pendingSettlements) return this.gap();
+          const trade = s.trades.find(t => t.id === data.tradeId);
+          if (trade) {
+            if (trade.settlement !== previous || (trade.settlementIntentId !== undefined && trade.settlementIntentId !== data.intentId)) return this.gap();
+            trade.settlement = status;
+            trade.settlementIntentId = data.intentId;
+          }
+          // The authoritative count also covers trades older than the bounded recent-trades window.
+          s.pendingSettlements = expected;
+          break;
+        }
         case 'positions': s.confirmedPositions = checkPositions(data, input.at); break;
         default: return this.gap();
       }

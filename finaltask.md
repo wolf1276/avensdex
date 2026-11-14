@@ -25,6 +25,8 @@ References: `docs/PHASE3_STATUS.md`, `docs/PAUSED_DEPLOYMENT_RECOVERY.md`, `docs
 
 ## 2. Protocol work: complete before claiming only integration remains
 
+- [x] Connect canonical settlement-journal reconciliation to durable matcher/feed outcomes and pending-match capacity; generated-signature, restart/reorg and loopback tests are local fixtures, not public execution.
+
 - [ ] Specify independent index, validated mark and premium observations; reject matcher-only price control, stale data and manipulation.
 - [x] Add a pure local funding-controller reference using existing baseline/adaptive math, epoch/revision checks, expiry, stale-gap handling and fractional index carry; see `docs/FUNDING_CONTROLLER.md`.
 - [x] Implement a standalone onchain baseline/adaptive funding adapter with configured bounds, scoped configuration/publisher authority and epoch/revision checks; test against the real local vault/settlement lifecycle (`docs/FUNDING_CONTROLLER.md`).

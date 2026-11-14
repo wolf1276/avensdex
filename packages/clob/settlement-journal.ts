@@ -449,6 +449,7 @@ export class SettlementJournal {
     const stored = this.#records.get(intentId);
     return stored ? this.#view(stored) : null;
   }
+  binding(): SettlementIdentity { return copy(this.identity); }
   intents(): readonly SettlementView[] {
     return copy([...this.#records.values()].map(stored => this.#view(stored)));
   }

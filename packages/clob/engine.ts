@@ -7,12 +7,14 @@ export interface StoredOrder extends Order {
   arrival: number; remaining6: string; matched6: string; cancelled6: string; resting: boolean;
   status: 'open' | 'partially_matched' | 'matched' | 'cancelled' | 'expired';
 }
+export type TradeSettlementStatus = 'blocked' | 'confirmed' | 'reverted' | 'unknown' | 'pending' | 'reorged';
 export interface Trade {
   id: string; maker: string; taker: string; makerTrader: string; takerTrader: string;
-  side: 'buy' | 'sell'; price18: string; size6: string; settlement: 'blocked';
+  side: 'buy' | 'sell'; price18: string; size6: string; settlement: TradeSettlementStatus;
+  settlementIntentId?: string;
 }
 export interface Event {
-  streamId: string; marketId: number; seq: number; at: number; type: 'order' | 'level' | 'bbo' | 'trade' | 'settlement' | 'positions';
+  streamId: string; marketId: number; seq: number; at: number; type: 'order' | 'level' | 'bbo' | 'trade' | 'settlement' | 'settlementOutcome' | 'positions';
   data: Record<string, unknown>;
 }
 export interface Positions {
@@ -22,14 +24,21 @@ export type Command = { type: 'submit'; at: number; order: Order }
   | { type: 'cancel'; at: number; id: string; trader: string }
   | { type: 'tick'; at: number }
   // Trusted reconciler input only, never a public API. No live producer exists yet.
-  | { type: 'positions'; at: number; snapshot: Positions };
+  | { type: 'positions'; at: number; snapshot: Positions }
+  // Trusted canonical outcome input only, never a public API.
+  | { type: 'settlementOutcome'; at: number; tradeId: string; intentId: string;
+      status: Exclude<TradeSettlementStatus, 'blocked'>; reason: string | null };
 export interface State {
   streamId: string; marketId: number; seq: number; clock: number; arrival: number; tradeId: number;
   orders: Map<string, StoredOrder>; nonces: Map<string, string>; trades: Trade[];
   positions: Positions | null; pendingReductions: Map<string, bigint>;
 }
 export const LIMITS = { activeOrders: 256, retainedOrders: 8704, traders: 1000, pendingMatches: 4096 } as const;
+// Retain terminal identities for reorg downgrades; exhausting history stops admission, never drops evidence.
+export const MAX_RETAINED_TRADES = 8192;
 export const MAX_FEED_BYTES = 8 * 1024 * 1024;
+export const terminalSettlement = (status: TradeSettlementStatus) => status === 'confirmed' || status === 'reverted';
+export const pendingSettlements = (trades: readonly Trade[]) => trades.filter(t => !terminalSettlement(t.settlement)).length;
 const orderKeys = ['id', 'trader', 'nonce', 'marketId', 'side', 'kind', 'size6', 'limitPrice18', 'expiry', 'reduceOnly', 'postOnly', 'ioc'];
 export function exact(value: unknown, keys: readonly string[]): asserts value is Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)
@@ -77,7 +86,7 @@ export function snapshot(s: State) {
   return { streamId: s.streamId, marketId: s.marketId, seq: s.seq, clock: s.clock, bids, asks,
     bestBid: bids[0]?.price18 ?? null, bestAsk: asks[0]?.price18 ?? null,
     orders: [...s.orders.values()].map(o => ({ ...o })), trades: s.trades.slice(-128),
-    pendingSettlements: s.trades.length, settlement: 'unavailable',
+    pendingSettlements: pendingSettlements(s.trades), settlement: 'unavailable',
     confirmedPositionsAvailable: s.positions !== null && s.clock - s.positions.sourceTime <= 60,
     confirmedPositions: s.positions ? structuredClone(s.positions) : null };
 }
@@ -89,6 +98,7 @@ export class Matcher {
       trades: [], positions: null, pendingReductions: new Map() };
   }
   snapshot() { return snapshot(this.state); }
+  trade(id: string) { const value = this.state.trades.find(t => t.id === id); return value ? structuredClone(value) : null; }
   // Prepare on a copy: rejected commands, including resource-limit failures, cannot partially mutate the book.
   prepare(command: Command) {
     const next = structuredClone(this.state), events = execute(next, command);
@@ -100,9 +110,14 @@ export class Matcher {
   }
   apply(command: Command) { return this.commit(this.prepare(command)); }
 }
+export function settlementTransitionAllowed(from: TradeSettlementStatus, to: TradeSettlementStatus): boolean {
+  if (to === 'blocked') return false;
+  return !terminalSettlement(from) || from === to || !terminalSettlement(to);
+}
 function execute(s: State, c: Command): Event[] {
   exact(c, c.type === 'submit' ? ['type', 'at', 'order'] : c.type === 'cancel' ? ['type', 'at', 'id', 'trader']
-    : c.type === 'positions' ? ['type', 'at', 'snapshot'] : ['type', 'at']);
+    : c.type === 'positions' ? ['type', 'at', 'snapshot']
+    : c.type === 'settlementOutcome' ? ['type', 'at', 'tradeId', 'intentId', 'status', 'reason'] : ['type', 'at']);
   time(c.at); if (c.at < s.clock || s.seq > Number.MAX_SAFE_INTEGER - 10000) throw Error('CLOCK_OR_SEQUENCE_BOUNDS');
   s.clock = c.at;
   const events: Event[] = [];
@@ -177,7 +192,8 @@ function execute(s: State, c: Command): Event[] {
         makerTrader: maker.trader, takerTrader: o.trader, side: o.side, price18: maker.limitPrice18, size6: size.toString(), settlement: 'blocked' };
       s.trades.push(trade); emit('trade', { ...trade });
       emit('settlement', { tradeId: trade.id, status: 'blocked', reason: 'SETTLEMENT_UNAVAILABLE' });
-      if (s.trades.length > LIMITS.pendingMatches) throw Error('PENDING_SETTLEMENT_LIMIT');
+      if (pendingSettlements(s.trades) > LIMITS.pendingMatches) throw Error('PENDING_SETTLEMENT_LIMIT');
+      if (s.trades.length > MAX_RETAINED_TRADES) throw Error('TRADE_HISTORY_CAPACITY');
     }
     if (o.remaining6 !== '0') {
       if (o.kind === 'market' || o.ioc || (o.reduceOnly && capacity(o) === 0n)) cancel(o, 'cancelled');
@@ -191,6 +207,23 @@ function execute(s: State, c: Command): Event[] {
       if (!old.resting && !pending.has(id)) s.orders.delete(id);
     }
     if (s.orders.size > LIMITS.retainedOrders) throw Error('HISTORY_CAPACITY');
+  } else if (c.type === 'settlementOutcome') {
+    if (!/^[0-9a-f]{64}$/.test(c.intentId) || !['confirmed', 'reverted', 'unknown', 'pending', 'reorged'].includes(c.status)
+      || (c.reason !== null && (typeof c.reason !== 'string' || !/^[A-Z0-9_]{1,80}$/.test(c.reason)))) throw Error('INVALID_OUTCOME');
+    const trade = s.trades.find(t => t.id === c.tradeId);
+    if (!trade) throw Error('UNKNOWN_TRADE');
+    if (trade.settlementIntentId !== undefined && trade.settlementIntentId !== c.intentId) throw Error('SETTLEMENT_INTENT_CONFLICT');
+    if (!settlementTransitionAllowed(trade.settlement, c.status)) throw Error('CONFLICTING_SETTLEMENT_OUTCOME');
+    // Unsupported flags must never release reduce-only reservations against a stale position snapshot.
+    for (const id of [trade.maker, trade.taker]) {
+      const order = s.orders.get(id);
+      if (!order || order.kind !== 'limit' || order.reduceOnly || order.postOnly || order.ioc) throw Error('UNSUPPORTED_SETTLEMENT_ORDER');
+    }
+    const previousStatus = trade.settlement;
+    trade.settlementIntentId = c.intentId;
+    trade.settlement = c.status;
+    emit('settlementOutcome', { tradeId: trade.id, intentId: c.intentId, previousStatus, status: c.status,
+      reason: c.reason, pendingSettlements: pendingSettlements(s.trades) });
   } else if (c.type !== 'tick') throw Error('UNKNOWN_COMMAND');
   const reductionReservations = new Map<string, bigint>();
   for (const o of [...s.orders.values()].filter(v => v.resting && v.reduceOnly).sort((a, b) => a.arrival - b.arrival)) {

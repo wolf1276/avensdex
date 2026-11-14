@@ -3,6 +3,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { JournaledMatcher } from '../../packages/clob/journal.ts';
 import { MAX_FEED_BYTES, type Command, type Event } from '../../packages/clob/engine.ts';
 import { admitSigned } from '../../packages/clob/admission.ts';
+import { SettlementOutcomeBridge } from '../../packages/clob/settlement-bridge.ts';
 
 export const MAX_CLIENTS = 16;
 export const MAX_BUFFERED_BYTES = MAX_FEED_BYTES;
@@ -77,6 +78,15 @@ export async function startMarketData(journal: JournaledMatcher, port = 8787, cl
     const result = await admitSigned(journal, envelope, clock());
     return { ...publish(result.events), settlement: 'unavailable' as const };
   }
+  async function reconcileSettlement(bridge: SettlementOutcomeBridge, tradeId: string, intentId: string) {
+    if (!(bridge instanceof SettlementOutcomeBridge) || bridge.matcher !== journal) throw Error('SETTLEMENT_MATCHER_MISMATCH');
+    try { return await bridge.reconcileTrade(tradeId, intentId, clock()); }
+    finally {
+      // Other producers may run while RPC reads await. Publish a coherent latest snapshot, not reordered deltas.
+      const text = JSON.stringify(frame());
+      for (const client of wss.clients) sendBounded(client, text);
+    }
+  }
   let stopped = false;
   const timer = setInterval(() => {
     if (stopped || !journal.writable) return;
@@ -94,7 +104,7 @@ export async function startMarketData(journal: JournaledMatcher, port = 8787, cl
     });
   } catch (error) { clearInterval(timer); wss.close(); throw error; }
   const address = server.address(); if (!address || typeof address === 'string') throw Error('LISTEN_FAILED');
-  return { port: address.port, apply, applySigned,
+  return { port: address.port, apply, applySigned, reconcileSettlement,
     async close() {
       stopped = true; clearInterval(timer);
       for (const client of wss.clients) client.terminate();
