@@ -17,6 +17,7 @@
     "clob:serve": "node --experimental-strip-types services/clob/start.ts",
     "deployment:plan": "node --experimental-strip-types packages/protocol/deployment-plan-cli.ts",
     "deployment:read": "node --experimental-strip-types packages/protocol/deployment-reader-cli.ts",
+    "deployment:reconcile": "node --experimental-strip-types packages/protocol/deployment-reconcile-cli.ts",
     "bench:clob": "node --experimental-strip-types scripts/benchmark-clob.mjs",
     "test:network": "python3 -m unittest discover -s scripts -t . -v",
     "test:contracts": "forge test --root contracts/evm",

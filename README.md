@@ -156,6 +156,12 @@ npm run deployment:read -- receipt <tx-hash>
 npm run deployment:read -- code <address> <decimal-block-number>
 ```
 
+The read-only deployment reader CLI prints two-provider observations only. A separate journal reconciliation CLI opens an existing journal and may write local reconciliation evidence; its RPC reads remain read-only:
+
+```sh
+npm run deployment:reconcile -- /absolute/external/path/journal /absolute/path/planner-input.json /absolute/path/reviewed-artifacts.json /absolute/path/runtime-config.json
+```
+
 ### Read-only market-data service
 
 Use a journal directory outside the repository. The service binds to `127.0.0.1`, reports `503` for readiness and all mutations, and has no signer.

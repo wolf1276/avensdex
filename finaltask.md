@@ -47,7 +47,7 @@ References: `todo.md` Phases 4–5, `docs/ARCHITECTURE.md`, `docs/LIVE_TRADING_B
 - [x] Add bounded offline extraction of ABI/creation code from the three fixed Foundry artifact paths into planner format, with malformed/unlinked-code rejection tests.
 - [ ] Review extracted ABI/creation code against the frozen source/tool versions and constructor parameters; extraction alone is not qualification.
 - [ ] Derive and verify constructor-dependent runtime hashes, including immutable values; do not equate creation-code hashes with deployed runtime.
-- [ ] Wire journal reconciliation to the two-provider reader through a bounded operator CLI; explicitly distinguish read-only RPC from local journal writes.
+- [x] Wire journal reconciliation to the two-provider reader through a bounded operator CLI; explicitly distinguish read-only RPC from local journal writes. Local unit tests use injected fake readers and fixture journals; RPC reads remain read-only while successful reconciliation may append local journal records.
 - [ ] Add operator-controlled signing with approval/plan binding and expiry checks; no server-side trading signer or credentials in repository/config/logs.
 - [ ] Persist recoverable signed material securely outside Git and record intent/identity before dispatch.
 - [ ] Add serial broadcast gated on exact sender, nonce, calldata, value, gas/fees, current approval and remaining budget.
