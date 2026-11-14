@@ -44,7 +44,8 @@ References: `todo.md` Phases 4–5, `docs/ARCHITECTURE.md`, `docs/LIVE_TRADING_B
 
 ## 3. Deployment operator tooling
 
-- [ ] Add reproducible real Foundry artifact preparation into the planner schema; verify ABI, creation code, source/tool versions and constructor parameters.
+- [x] Add bounded offline extraction of ABI/creation code from the three fixed Foundry artifact paths into planner format, with malformed/unlinked-code rejection tests.
+- [ ] Review extracted ABI/creation code against the frozen source/tool versions and constructor parameters; extraction alone is not qualification.
 - [ ] Derive and verify constructor-dependent runtime hashes, including immutable values; do not equate creation-code hashes with deployed runtime.
 - [ ] Wire journal reconciliation to the two-provider reader through a bounded operator CLI; explicitly distinguish read-only RPC from local journal writes.
 - [ ] Add operator-controlled signing with approval/plan binding and expiry checks; no server-side trading signer or credentials in repository/config/logs.

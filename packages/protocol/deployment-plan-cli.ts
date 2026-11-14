@@ -16,7 +16,7 @@ export function parseDeploymentPlanArgs(args: readonly string[]): DeploymentPlan
   return { inputPath: args[0]!, artifactsPath: args[1]! };
 }
 
-function readJson(path: string, unavailable: string): unknown {
+export function readJson(path: string, unavailable: string): unknown {
   let fd: number | undefined;
   try {
     fd = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK);
