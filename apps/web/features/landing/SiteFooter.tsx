@@ -18,7 +18,7 @@ export function SiteFooter() {
       transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="footer-brand">
-        <div className="landing-wordmark"><Image src="/logo.svg" alt="" width={28} height={28} className="footer-logo" /><span>Avensdex</span></div>
+        <div className="landing-wordmark"><Image src="/brand/avensdex-mark.png" alt="Avensdex" width={32} height={32} className="footer-logo" /></div>
         <h2>
           Your market.
           <br />

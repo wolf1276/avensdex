@@ -28,12 +28,11 @@ export function SiteHeader() {
 
       <Link className="agent-nav-logo" href="/" aria-label="Avensdex home">
         <motion.img
-          src="/logo.svg"
+          src="/brand/avensdex-mark.png"
           alt=""
           whileHover={{ scale: 1.04 }}
           transition={{ type: "spring", stiffness: 320, damping: 18 }}
         />
-        <span>Avensdex</span>
       </Link>
 
       <MotionLink className="agent-launch" href={`/trade/${DEFAULT_MARKET_SYMBOL}`} prefetch={false} whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>

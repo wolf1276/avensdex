@@ -1274,3 +1274,21 @@
     opacity: 1 !important;
   }
 }
+
+/* Lower-page copy must stay legible, including during scroll-reveal animation. */
+#use-cases, #use-cases *, .agent-footer, .agent-footer * {
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+}
+#use-cases .agent-kicker { color: #c9b2ff; font-size: 14px; }
+#use-cases .use-case-list summary { color: #f2f0fa; font-size: 16px; line-height: 1.6; }
+#use-cases .use-case-list p { color: #cdd0dc; font-size: 15px; line-height: 1.75; max-width: 62ch; }
+.agent-footer p, .agent-footer label, .agent-footer a, .agent-footer form p, .footer-bottom {
+  color: #cdd0dc; font-size: 14px; line-height: 1.65; font-weight: 500;
+}
+.agent-footer label { color: #f2f0fa; }
+.agent-footer input, .agent-footer button { height: 44px; font-size: 14px; }
+.agent-footer input { background: #171920; border: 1px solid #444652; }
+.agent-footer input::placeholder { color: #b9bdcd; opacity: 1; }
+.agent-footer button { color: #0b0d12; font-weight: 600; }

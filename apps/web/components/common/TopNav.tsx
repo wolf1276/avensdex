@@ -42,13 +42,8 @@ export function TopNav() {
           </button>
 
           <Link href="/" className="flex shrink-0 items-center gap-[8px] select-none">
-            <Image src="/logo.svg" alt="Avensdex" width={28} height={28} priority className="object-contain" />
-            <span
-              className="text-[18px] font-bold text-[#f5f5f5]"
-              style={{ fontFamily: "var(--font-poppins), 'Poppins', system-ui, sans-serif" }}
-            >
-              Avensdex
-            </span>
+            <Image src="/brand/avensdex-mark.png" alt="Avensdex" width={28} height={28} priority className="object-contain" />
+
           </Link>
 
           {/* Desktop / tablet inline nav */}
