@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildDeploymentPlan } from './deployment.ts';
 import {
@@ -95,6 +95,40 @@ test('CLI rejects missing, non-regular, empty, oversized and malformed JSON file
   assert.throws(() => buildDeploymentPlanFromFiles(malformed, artifactsPath, NOW), /INVALID_DEPLOYMENT_PLAN_JSON/);
   const schema = writeJson(dir, 'schema.json', { ...input(), extra: true });
   assert.throws(() => buildDeploymentPlanFromFiles(schema, artifactsPath, NOW), /INVALID_DEPLOYMENT_SCHEMA/);
+});
+
+test('CLI rejects FIFOs as non-regular files without blocking', t => {
+  const dir = directory(t), inputPath = writeJson(dir, 'input.json', input());
+  const artifactsPath = writeJson(dir, 'artifacts.json', artifacts());
+  const fifo = join(dir, 'input.fifo');
+  execFileSync('mkfifo', [fifo]);
+  const cli = fileURLToPath(new URL('./deployment-plan-cli.ts', import.meta.url));
+  for (const args of [[fifo, artifactsPath], [inputPath, fifo]]) {
+    const result = spawnSync(process.execPath, ['--experimental-strip-types', cli, ...args], {
+      encoding: 'utf8', timeout: 5000,
+    });
+    assert.equal(result.error, undefined);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /FILE_NOT_REGULAR/);
+  }
+});
+
+test('CLI accepts a JSON file exactly at the byte limit', t => {
+  const dir = directory(t), json = JSON.stringify(input());
+  const inputPath = join(dir, 'input.json');
+  writeFileSync(inputPath, json + ' '.repeat(MAX_DEPLOYMENT_PLAN_FILE_BYTES - Buffer.byteLength(json)));
+  const artifactsPath = writeJson(dir, 'artifacts.json', artifacts());
+  assert.equal(buildDeploymentPlanFromFiles(inputPath, artifactsPath, NOW).chainId, 43113);
+});
+
+test('descriptor-safe reads remain usable after normal and error paths', t => {
+  const dir = directory(t), inputPath = writeJson(dir, 'input.json', input());
+  const artifactsPath = writeJson(dir, 'artifacts.json', artifacts());
+  assert.equal(buildDeploymentPlanFromFiles(inputPath, artifactsPath, NOW).chainId, 43113);
+  const malformed = join(dir, 'malformed.json');
+  writeFileSync(malformed, '{');
+  assert.throws(() => buildDeploymentPlanFromFiles(malformed, artifactsPath, NOW), /INVALID_DEPLOYMENT_PLAN_JSON/);
+  assert.equal(buildDeploymentPlanFromFiles(inputPath, artifactsPath, NOW).chainId, 43113);
 });
 
 test('CLI prints the paused, approval-required plan and fails closed on bad arguments', t => {

@@ -1,6 +1,6 @@
 // Offline deployment-plan builder. Reads external planner input and reviewed artifacts only.
 // No signer, wallet, RPC, broadcast, activation or journal mutation is implemented here.
-import { readFileSync, statSync } from 'node:fs';
+import { closeSync, constants, fstatSync, openSync, readSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { buildDeploymentPlan, type DeploymentPlan } from './deployment.ts';
 
@@ -17,17 +17,39 @@ export function parseDeploymentPlanArgs(args: readonly string[]): DeploymentPlan
 }
 
 function readJson(path: string, unavailable: string): unknown {
-  let size: number, regular: boolean;
+  let fd: number | undefined;
   try {
-    const stats = statSync(path);
-    size = stats.size;
-    regular = stats.isFile();
-  } catch { throw Error(unavailable); }
-  if (!regular) throw Error('DEPLOYMENT_PLAN_FILE_NOT_REGULAR');
-  if (size <= 0 || size > MAX_DEPLOYMENT_PLAN_FILE_BYTES) throw Error('DEPLOYMENT_PLAN_FILE_CAPACITY');
-  let text: string;
-  try { text = readFileSync(path, 'utf8'); } catch { throw Error(unavailable); }
-  try { return JSON.parse(text); } catch { throw Error('INVALID_DEPLOYMENT_PLAN_JSON'); }
+    fd = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK);
+  } catch {
+    throw Error(unavailable);
+  }
+  try {
+    let stats;
+    try { stats = fstatSync(fd); } catch { throw Error(unavailable); }
+    if (!stats.isFile()) throw Error('DEPLOYMENT_PLAN_FILE_NOT_REGULAR');
+    if (stats.size <= 0 || stats.size > MAX_DEPLOYMENT_PLAN_FILE_BYTES) throw Error('DEPLOYMENT_PLAN_FILE_CAPACITY');
+
+    const buffer = Buffer.alloc(MAX_DEPLOYMENT_PLAN_FILE_BYTES + 1);
+    let total = 0;
+    try {
+      while (total < buffer.length) {
+        const read = readSync(fd, buffer, total, buffer.length - total, null);
+        if (read === 0) break;
+        total += read;
+      }
+    } catch {
+      throw Error(unavailable);
+    }
+    if (total <= 0 || total > MAX_DEPLOYMENT_PLAN_FILE_BYTES || total !== stats.size) {
+      throw Error('DEPLOYMENT_PLAN_FILE_CAPACITY');
+    }
+    const text = buffer.subarray(0, total).toString('utf8');
+    try { return JSON.parse(text); } catch { throw Error('INVALID_DEPLOYMENT_PLAN_JSON'); }
+  } finally {
+    if (fd !== undefined) {
+      try { closeSync(fd); } catch { /* descriptor cleanup must not mask the original error */ }
+    }
+  }
 }
 
 export function buildDeploymentPlanFromFiles(inputPath: string, artifactsPath: string, now: number): DeploymentPlan {
