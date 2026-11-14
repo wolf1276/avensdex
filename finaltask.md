@@ -27,8 +27,9 @@ References: `docs/PHASE3_STATUS.md`, `docs/PAUSED_DEPLOYMENT_RECOVERY.md`, `docs
 
 - [ ] Specify independent index, validated mark and premium observations; reject matcher-only price control, stale data and manipulation.
 - [x] Add a pure local funding-controller reference using existing baseline/adaptive math, epoch/revision checks, expiry, stale-gap handling and fractional index carry; see `docs/FUNDING_CONTROLLER.md`.
-- [ ] Implement and review the onchain baseline/adaptive controller, smoothing, deadband, slope/absolute caps, configuration authority and parameter bounds; the local reference does not satisfy contract integration.
-- [ ] Implement funding epochs, monotonic publication, replay protection, rate expiry, stale-gap behavior and index settlement.
+- [x] Implement a standalone onchain baseline/adaptive funding adapter with configured bounds, scoped configuration/publisher authority and epoch/revision checks; test against the real local vault/settlement lifecycle (`docs/FUNDING_CONTROLLER.md`).
+- [ ] Qualify independent index/mark sources, review economic parameters and integrate the new funding adapter into deployment/publisher tooling; the existing four-transaction deployment plan still uses the manual-rate feed adapter.
+- [x] Implement funding epochs, monotonic publication, replay protection, rate expiry, stale-gap behavior and fractional index settlement in the standalone funding adapter; local tests only.
 - [ ] Differential-test funding against source references; test both signs, rounding carry, payer clipping, restart and conservation over multiple epochs.
 - [ ] Extend the single canonical ledger with isolated strategy allocation, owned spot inventory, reserves, costs and insurance accounting; no second spendable balance.
 - [ ] Implement finite owner policies binding chain/deployment, executor, revision, nonce, expiry, routes/assets, exposure and cost budgets.
