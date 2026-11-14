@@ -16,6 +16,8 @@
     "test:clob": "node --experimental-strip-types --test packages/clob/*.test.mjs services/clob/*.test.mjs",
     "clob:serve": "node --experimental-strip-types services/clob/start.ts",
     "deployment:plan": "node --experimental-strip-types packages/protocol/deployment-plan-cli.ts",
+    "deployment:prepare": "node --experimental-strip-types scripts/prepare-paused-fuji-plan.mjs",
+    "deployment:execute": "node --experimental-strip-types scripts/deploy-paused-fuji.mjs",
     "deployment:read": "node --experimental-strip-types packages/protocol/deployment-reader-cli.ts",
     "deployment:reconcile": "node --experimental-strip-types packages/protocol/deployment-reconcile-cli.ts",
     "bench:clob": "node --experimental-strip-types scripts/benchmark-clob.mjs",

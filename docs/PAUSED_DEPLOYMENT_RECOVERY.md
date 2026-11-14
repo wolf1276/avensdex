@@ -25,6 +25,16 @@ The artifacts file must be an object with exactly `AvensVault`, `AvensFeedOracle
 
 The CLI has no signer, wallet, RPC, broadcast, activation, approval or journal-write path. Printing a plan is not authorization to sign or deploy.
 
+## Explicit operator preparation and execution
+
+`npm run deployment:prepare -- <absolute-input.json> <new-absolute-external-directory>` builds the existing plan and rehearses its four exact calls on a newly spawned private loopback Fuji fork. Public upstream calls are read-only and fixed-provider; no operator key is loaded. It verifies predicted addresses, gas bounds, constructor-dependent runtime hashes, owner/publisher/binding, zero liabilities and paused custody. Generated packets stay outside Git. Fork receipts are not public deployment evidence.
+
+`npm run deployment:execute -- <absolute-packet-directory> <encrypted-keystore-path> <password-file-path> <approval-json-path>` is a separate **operator-only signing/broadcast CLI**, not a server component. The approval object must contain exactly `approved:true`, `chainId:43113`, the exact `planHash`, a current `expiresAt` no later than the plan expiry, a decimal `budgetWei` covering maximum planned gas and at most 0.05 test AVAX, `pausedOnly:true` and an explicit `authorizationReference`. A local approval file records applicable owner authorization; creating one is not a substitute for obtaining that authorization.
+
+The CLI validates signer identity, actual chain, latest/pending nonce, native gas reserve and source-code pins; preserves owner-only raw signed material with fsync before journal binding/dispatch; and submits each sequence once. It reconciles the fixed signed hash against the paired reader before signing the next sequence. Unknown/reverted/reorged outcomes stop with preserved journals and a global recovery marker—there is no automatic retry, replacement, reinitialization or activation. Final verification reads actual paused vault/binding/publisher state from both providers. Never upload keystores, password files, packets or recovery material to Vercel or Git.
+
+The reusable approval/calldata helpers have local regression tests. Preparation additionally contains assert-based private-fork checks of the real compiled artifacts; operator execution still requires current qualification and bounded authorization.
+
 ## Durable evidence
 
 `DeploymentJournal.open(directory, { input, artifacts, expectedRuntimeHashes, reader, confirmations, create? }, now)` writes/fsyncs its plan header before recording any signed identity. It uses an exclusive writer lock, hash-chained bounded JSONL, file/directory fsync and refuses missing/corrupt journals, truncation, lock stealing or an implicit reset. Unknown writes poison the writer and retain its lock for explicit recovery.
