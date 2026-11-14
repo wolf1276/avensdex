@@ -52,41 +52,41 @@
 :root,
 .dark {
   color-scheme: dark;
-  --background: #19191A;
+  --background: #100e17;
   --foreground: #f5f5f5;
-  --card: #212128;
+  --card: #191422;
   --card-foreground: #f5f5f5;
-  --popover: #212128;
+  --popover: #191422;
   --popover-foreground: #f5f5f5;
-  --primary: #f5f5f5;
-  --primary-foreground: #19191A;
-  --secondary: #212128;
+  --primary: #8050d8;
+  --primary-foreground: #faf7ff;
+  --secondary: #191422;
   --secondary-foreground: #f5f5f5;
-  --muted: #212128;
+  --muted: #191422;
   --muted-foreground: #a3a3a3;
-  --accent: #212128;
+  --accent: #191422;
   --accent-foreground: #f5f5f5;
   --destructive: #ff3858;
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.14);
-  --ring: #f5f5f5;
+  --ring: #a06bff;
   --radius: 0.375rem;
-  --sidebar: #19191A;
+  --sidebar: #100e17;
   --sidebar-foreground: #f5f5f5;
-  --sidebar-primary: #f5f5f5;
-  --sidebar-primary-foreground: #19191A;
-  --sidebar-accent: #212128;
+  --sidebar-primary: #8050d8;
+  --sidebar-primary-foreground: #faf7ff;
+  --sidebar-accent: #191422;
   --sidebar-accent-foreground: #f5f5f5;
   --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #f5f5f5;
+  --sidebar-ring: #a06bff;
 
   /* Phoenix semantic tokens */
   --ph-long: #00d48a;
   --ph-long-dim: rgba(0, 212, 138, 0.12);
   --ph-short: #ff3858;
   --ph-short-dim: rgba(255, 56, 88, 0.12);
-  --ph-panel: #212128;
-  --ph-panel-alt: #19191A;
+  --ph-panel: #191422;
+  --ph-panel-alt: #100e17;
   --ph-border: rgba(255, 255, 255, 0.1);
   --ph-border-subtle: rgba(255, 255, 255, 0.05);
 }

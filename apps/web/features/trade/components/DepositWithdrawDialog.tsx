@@ -18,7 +18,7 @@ const explorerTx = (hash: string) => `${EXPLORER_URL}/tx/${hash}`;
 
 export function DepositWithdrawDialog({
   triggerLabel = "Deposit / Withdraw",
-  triggerClassName = "min-h-9 py-2 text-xs leading-tight rounded-[6px] border border-[#334155] bg-[#212128] hover:border-[#475569] text-[#f5f5f5] px-3 max-w-[100px] text-center transition-colors",
+  triggerClassName = "min-h-9 py-2 text-xs leading-tight rounded-[6px] border border-[#443456] bg-[#191422] hover:border-[#475569] text-[#f5f5f5] px-3 max-w-[100px] text-center transition-colors",
   defaultTab = "deposit",
 }: {
   triggerLabel?: string;
@@ -152,7 +152,7 @@ export function DepositWithdrawDialog({
     (tab === "deposit" && walletBalanceHuman !== null && amt > walletBalanceHuman);
   const pill = (active: boolean) =>
     `rounded-[8px] py-2 text-[13px] font-semibold transition-colors ${
-      active ? "bg-[#212128] text-[#f5f5f5]" : "text-[#a3a3a3] hover:text-[#f5f5f5]"
+      active ? "bg-[#191422] text-[#f5f5f5]" : "text-[#a3a3a3] hover:text-[#f5f5f5]"
     }`;
 
   return (
@@ -169,7 +169,7 @@ export function DepositWithdrawDialog({
               onClick={() => setOpen(false)}
             />
             <div
-              className="relative max-h-[92dvh] w-full max-w-full overflow-y-auto rounded-t-2xl border border-[#334155] bg-[#19191A] text-[#f5f5f5] shadow-[0_20px_60px_rgba(0,0,0,.6)] sm:w-[380px] sm:rounded-xl"
+              className="relative max-h-[92dvh] w-full max-w-full overflow-y-auto rounded-t-2xl border border-[#443456] bg-[#100e17] text-[#f5f5f5] shadow-[0_20px_60px_rgba(0,0,0,.6)] sm:w-[380px] sm:rounded-xl"
               style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             >
               <div className="p-5">
@@ -179,14 +179,14 @@ export function DepositWithdrawDialog({
                   <button
                     onClick={() => setOpen(false)}
                     aria-label="Close"
-                    className="w-7 h-7 grid place-items-center rounded-[6px] text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#212128] transition-colors"
+                    className="w-7 h-7 grid place-items-center rounded-[6px] text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#191422] transition-colors"
                   >
                     <X size={16} />
                   </button>
                 </div>
 
                 {/* Tabs */}
-                <div className="mt-4 grid grid-cols-2 gap-1 rounded-[10px] border border-[#334155] bg-[#212128] p-1">
+                <div className="mt-4 grid grid-cols-2 gap-1 rounded-[10px] border border-[#443456] bg-[#191422] p-1">
                   <button className={pill(tab === "deposit")} onClick={() => setTab("deposit")}>Deposit</button>
                   <button className={pill(tab === "withdraw")} onClick={() => setTab("withdraw")}>Withdraw</button>
                 </div>
@@ -200,8 +200,8 @@ export function DepositWithdrawDialog({
                         onClick={() => { setAssetCode(a.code); setAmount(""); }}
                         className={`flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border px-3 py-2 text-[13px] font-semibold transition-colors ${
                           a.code === assetCode
-                            ? "border-[#e2a9f1] bg-[#212128] text-[#f5f5f5]"
-                            : "border-[#334155] bg-[#19191A] text-[#a3a3a3] hover:text-[#f5f5f5]"
+                            ? "border-[#e2a9f1] bg-[#191422] text-[#f5f5f5]"
+                            : "border-[#443456] bg-[#100e17] text-[#a3a3a3] hover:text-[#f5f5f5]"
                         }`}
                       >
                         <AssetLogo symbol={a.code} size={15} />
@@ -212,7 +212,7 @@ export function DepositWithdrawDialog({
                 )}
 
                 {/* Amount panel */}
-                <div className="mt-4 rounded-[12px] border border-[#334155] bg-[#212128] p-4">
+                <div className="mt-4 rounded-[12px] border border-[#443456] bg-[#191422] p-4">
                   <div className="mb-2 flex items-center justify-between text-[12px] text-[#a3a3a3]">
                     <span>Amount</span>
                     <div className="flex items-center gap-2 text-[11.5px]">
@@ -220,13 +220,13 @@ export function DepositWithdrawDialog({
                         <>
                           <button
                             onClick={() => setAmount((walletBalanceHuman / 2).toFixed(2))}
-                            className="rounded-full bg-[#212128] border border-[#334155] px-2.5 py-0.5 font-semibold text-[#a3a3a3] hover:text-[#f5f5f5] transition-colors"
+                            className="rounded-full bg-[#191422] border border-[#443456] px-2.5 py-0.5 font-semibold text-[#a3a3a3] hover:text-[#f5f5f5] transition-colors"
                           >
                             50%
                           </button>
                           <button
                             onClick={() => setAmount(walletBalanceHuman.toFixed(2))}
-                            className="rounded-full bg-[#212128] border border-[#334155] px-2.5 py-0.5 font-semibold text-[#a3a3a3] hover:text-[#f5f5f5] transition-colors"
+                            className="rounded-full bg-[#191422] border border-[#443456] px-2.5 py-0.5 font-semibold text-[#a3a3a3] hover:text-[#f5f5f5] transition-colors"
                           >
                             Max
                           </button>
@@ -236,13 +236,13 @@ export function DepositWithdrawDialog({
                         <>
                           <button
                             onClick={() => setAmount((balanceHuman / 2).toFixed(2))}
-                            className="rounded-full bg-[#212128] border border-[#334155] px-2.5 py-0.5 font-semibold text-[#a3a3a3] hover:text-[#f5f5f5] transition-colors"
+                            className="rounded-full bg-[#191422] border border-[#443456] px-2.5 py-0.5 font-semibold text-[#a3a3a3] hover:text-[#f5f5f5] transition-colors"
                           >
                             50%
                           </button>
                           <button
                             onClick={() => setAmount(balanceHuman.toFixed(2))}
-                            className="rounded-full bg-[#212128] border border-[#334155] px-2.5 py-0.5 font-semibold text-[#a3a3a3] hover:text-[#f5f5f5] transition-colors"
+                            className="rounded-full bg-[#191422] border border-[#443456] px-2.5 py-0.5 font-semibold text-[#a3a3a3] hover:text-[#f5f5f5] transition-colors"
                           >
                             Max
                           </button>
@@ -317,7 +317,7 @@ export function DepositWithdrawDialog({
                     loading || !amount || amt <= 0 || overMax || overCap || !asset ||
                     (tab === "deposit" && depositsBlocked)
                   }
-                  className="mt-5 w-full h-12 rounded-[10px] text-[14px] font-bold text-[#19191A] bg-[#e2a9f1] hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="mt-5 w-full h-12 rounded-[10px] text-[14px] font-bold text-[#100e17] bg-[#e2a9f1] hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
                   {loading
                     ? "Confirming…"

@@ -228,7 +228,7 @@ function PositionRow({
   const v = getPositionView(position, markPrice);
 
   return (
-    <tr className="border-t border-[#2A2A31] hover:bg-white/[0.02] transition-colors">
+    <tr className="border-t border-[#30283e] hover:bg-white/[0.02] transition-colors">
       <td className="pl-4 pr-2 py-[10px] text-left">
         <MarketLabel v={v} />
       </td>
@@ -277,7 +277,7 @@ function PositionCard({
   const v = getPositionView(position, markPrice);
 
   return (
-    <div className="rounded-[10px] border border-[#2A2A31] bg-[#212128] p-3">
+    <div className="rounded-[10px] border border-[#30283e] bg-[#191422] p-3">
       <div className="flex items-center justify-between gap-2">
         <MarketLabel v={v} />
         <CloseButton closing={closing} setClosing={setClosing} onClose={onClose} />
@@ -341,7 +341,7 @@ function CloseButton({
 }) {
   return (
     <button
-      className="shrink-0 rounded-[6px] border border-[#334155] px-3 py-1.5 text-[12px] font-semibold text-[#f5f5f5] transition-colors hover:border-[#475569] hover:bg-[#212128] disabled:opacity-50"
+      className="shrink-0 rounded-[6px] border border-[#443456] px-3 py-1.5 text-[12px] font-semibold text-[#f5f5f5] transition-colors hover:border-[#475569] hover:bg-[#191422] disabled:opacity-50"
       disabled={closing}
       onClick={async () => {
         setClosing(true);

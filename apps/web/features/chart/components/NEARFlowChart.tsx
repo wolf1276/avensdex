@@ -70,7 +70,7 @@ export function NEARFlowChart({ symbol, marketSymbol, priceDecimals, position, o
   }
 
   return (
-    <div ref={shellRef} className="flex flex-col h-full overflow-hidden rounded-none bg-[#19191A]">
+    <div ref={shellRef} className="flex flex-col h-full overflow-hidden rounded-none bg-[#100e17]">
       {/* Top bar — timeframe & chart type drive the TradingView widget */}
       <ChartTopBar
         timeframe={timeframe}
@@ -129,7 +129,7 @@ function ChartOverlay({
   const asks = orders.filter((o) => o.side === 'sell').sort((a, b) => a.price - b.price)
 
   return (
-    <div className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[220px] flex-col gap-1.5 rounded-[8px] border border-[#2A2A31] bg-[#19191A]/85 px-2.5 py-2 backdrop-blur-sm">
+    <div className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[220px] flex-col gap-1.5 rounded-[8px] border border-[#30283e] bg-[#100e17]/85 px-2.5 py-2 backdrop-blur-sm">
       {position && (
         <>
           <div className="flex items-center gap-1.5">
@@ -163,7 +163,7 @@ function ChartOverlay({
       )}
 
       {orders.length > 0 && (
-        <div className={position ? 'mt-1 border-t border-[#2A2A31] pt-1.5' : ''}>
+        <div className={position ? 'mt-1 border-t border-[#30283e] pt-1.5' : ''}>
           <span className="text-[9.5px] font-semibold uppercase tracking-wider text-[#737373]">
             Resting ({orders.length})
           </span>

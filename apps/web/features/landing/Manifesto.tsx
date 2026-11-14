@@ -25,7 +25,7 @@ export function Manifesto() {
           stagger={0.012}
         />
         <WordReveal
-          text="Avalanche Fuji (43113) is a validation venue, not a promise of execution or profit. Deposits stay paused until the owner qualifies the deployment; trading follows the on-chain readiness check. Use test funds only. Leveraged trading carries risk."
+          text="Avalanche Fuji (43113) is a validation venue, not a promise of execution or profit. Deposits stay paused until the owner qualifies the deployment; trading follows the on-chain readiness check. Leveraged trading carries risk."
           stagger={0.009}
           delay={0.08}
         />

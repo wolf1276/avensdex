@@ -34,7 +34,7 @@ export function Hero() {
           {"Find your edge.\nKeep your\nflow."}
         </TextAscend>
         <WordReveal
-          text="A perpetuals workspace connected to Avalanche Fuji. View the book, connect your injected browser wallet, and manage signed limit orders against the configured deployment. Test funds only; trading follows on-chain venue readiness."
+          text="A perpetuals workspace connected to Avalanche Fuji. Explore market data, funding mechanics and signed-order design. Trading follows on-chain venue readiness."
           delay={0.48}
           stagger={0.022}
           className="hero-subcopy"
@@ -45,7 +45,7 @@ export function Hero() {
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 0.62, delay: 0.72, ease: [0.22, 1, 0.36, 1] }}
         >
-          <Link href={`/trade/${DEFAULT_MARKET_SYMBOL}`} prefetch={false}>Open testnet terminal ↗</Link>
+          <Link href={`/trade/${DEFAULT_MARKET_SYMBOL}`} prefetch={false}>Open terminal ↗</Link>
           <a href="#platform">Explore Avensdex</a>
         </motion.div>
       </motion.div>

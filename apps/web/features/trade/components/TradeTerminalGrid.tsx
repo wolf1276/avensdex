@@ -38,7 +38,7 @@ export function TradeTerminalGrid({ market }: { market: MarketConfig }) {
       </div>
 
       {/* ── Mobile tab switcher (hidden on desktop) ── */}
-      <div className="sticky top-[40px] z-10 flex shrink-0 border-b border-[#2A2A31] bg-[#19191A] lg:hidden">
+      <div className="sticky top-[40px] z-10 flex shrink-0 border-b border-[#30283e] bg-[#100e17] lg:hidden">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -65,7 +65,7 @@ export function TradeTerminalGrid({ market }: { market: MarketConfig }) {
       {/* ── Order ticket ── */}
       <div
         style={{ gridArea: "ticket" }}
-        className={`${vis("ticket")} relative flex-col border border-[#2A2A31] bg-[#19191A] pb-[max(16px,env(safe-area-inset-bottom))] lg:flex lg:overflow-y-auto lg:pb-0`}
+        className={`${vis("ticket")} relative flex-col border border-[#30283e] bg-[#100e17] pb-[max(16px,env(safe-area-inset-bottom))] lg:flex lg:overflow-y-auto lg:pb-0`}
       >
         <AccountBar />
         <OrderEntry market={market} side={side} setSide={setSide} />
@@ -79,7 +79,7 @@ export function TradeTerminalGrid({ market }: { market: MarketConfig }) {
       {/* ── Mobile sticky Long/Short bar — jumps to the ticket pre-set ── */}
       {activeTab !== "ticket" && (
         <div
-          className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-2 border-t border-[#2A2A31] bg-[#19191A]/95 p-3 backdrop-blur-sm lg:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-2 border-t border-[#30283e] bg-[#100e17]/95 p-3 backdrop-blur-sm lg:hidden"
           style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
         >
           <button

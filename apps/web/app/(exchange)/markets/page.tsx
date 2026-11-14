@@ -20,7 +20,7 @@ export default function MarketsPage() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-[22px] font-semibold tracking-[.01em] sm:text-[24px]">Markets</h1>
-            <p className="mt-1 text-[13px] text-[#a3a3a3]">Active perpetual markets on Avalanche Fuji (43113). Test funds only.</p>
+            <p className="mt-1 text-[13px] text-[#a3a3a3]">Active perpetual markets on Avalanche Fuji (43113).</p>
           </div>
           <div className="rounded-[6px] border border-[#2A2A31] bg-[#212128] px-3 py-2 text-[12px] text-[#a3a3a3]">
             {markets.length} active

@@ -122,11 +122,11 @@ export function WalletConnect() {
             </Button>
             {!hasInjected && (
               <p role="status" className="text-sm text-muted-foreground">
-                No injected browser wallet detected. Install Core or MetaMask, then reload this page.
+                Wallet access is temporarily paused during security review.
               </p>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">Test funds only. Connecting does not submit a trading order.</p>
+          <p className="text-xs text-muted-foreground">Connecting does not submit a trading order.</p>
         </DialogContent>
       </Dialog>
     );

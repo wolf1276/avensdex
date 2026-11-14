@@ -30,7 +30,7 @@ export function SiteFooter() {
           <p>Explore</p>
           <a href="#platform">Platform</a>
           <a href="#use-cases">Inside Avensdex</a>
-          <Link href={`/trade/${DEFAULT_MARKET_SYMBOL}`} prefetch={false}>Fuji testnet exchange</Link>
+          <Link href={`/trade/${DEFAULT_MARKET_SYMBOL}`} prefetch={false}>Exchange</Link>
         </div>
       </div>
       <form className="footer-newsletter" onSubmit={(event) => {
@@ -47,7 +47,7 @@ export function SiteFooter() {
       </form>
       <div className="footer-bottom">
         <span>Avensdex · Avalanche Fuji C-Chain (43113)</span>
-        <span>Test funds only. Not mainnet. Not financial advice.</span>
+        <span>Development preview. Not financial advice.</span>
       </div>
     </motion.footer>
   );

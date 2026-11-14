@@ -77,7 +77,7 @@ export function MarketHeader({ market }: { market: MarketConfig }) {
   ];
 
   return (
-    <div className="flex h-[40px] items-center rounded-none border border-[#2A2A31] bg-[#19191A]">
+    <div className="flex h-[40px] items-center rounded-none border border-[#30283e] bg-[#100e17]">
       {/* Pair selector — switches market */}
       <div className="relative flex h-full shrink-0 items-center gap-2 px-3" onKeyDown={(event) => {
         if (event.key === 'Escape' && pairOpen) {
@@ -103,22 +103,22 @@ export function MarketHeader({ market }: { market: MarketConfig }) {
           ) : (
             <MarketPairLabel baseSymbol={baseSymbol} quoteAsset={market.quoteAsset} />
           )}
-          <span className="rounded-[5px] border px-2 py-[2px] font-mono text-[11.5px] font-semibold border-[#334155] bg-[#212128] text-[#f5f5f5]">
+          <span className="rounded-[5px] border px-2 py-[2px] font-mono text-[11.5px] font-semibold border-[#443456] bg-[#191422] text-[#f5f5f5]">
             {leverageDisplay}X
           </span>
         </div>
         {canSwitchMarkets && pairOpen && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => { setPairOpen(false); setPairQuery(""); }} />
-            <div className="absolute left-0 top-full mt-2 z-50 w-[290px] rounded-[10px] border border-[#334155] bg-[#19191A] shadow-[0_20px_40px_rgba(0,0,0,.6)] overflow-hidden">
-              <div className="border-b border-[#2A2A31] p-2">
+            <div className="absolute left-0 top-full mt-2 z-50 w-[290px] rounded-[10px] border border-[#443456] bg-[#100e17] shadow-[0_20px_40px_rgba(0,0,0,.6)] overflow-hidden">
+              <div className="border-b border-[#30283e] p-2">
                 <input
                   autoFocus
                   value={pairQuery}
                   onChange={(e) => setPairQuery(e.target.value)}
                   placeholder="Search markets…"
                   aria-label="Search markets"
-                  className="w-full rounded-[6px] border border-[#2A2A31] bg-[#212128] px-2 py-[6px] text-[12px] text-[#f5f5f5] outline-none placeholder:text-[#737373] focus:border-[#475569]"
+                  className="w-full rounded-[6px] border border-[#30283e] bg-[#191422] px-2 py-[6px] text-[12px] text-[#f5f5f5] outline-none placeholder:text-[#737373] focus:border-[#475569]"
                 />
               </div>
               <div className="max-h-[320px] overflow-y-auto">
@@ -137,8 +137,8 @@ export function MarketHeader({ market }: { market: MarketConfig }) {
                       <button
                         key={m.marketId}
                         onClick={() => { setPairOpen(false); setPairQuery(""); if (m.marketId !== market.marketId) router.push(`/trade/${m.symbol}`); }}
-                        className={`flex w-full items-center justify-between gap-2 px-3 py-[10px] text-left hover:bg-[#2A2A31] transition-colors ${
-                          m.marketId === market.marketId ? "bg-[#2A2A31]" : ""
+                        className={`flex w-full items-center justify-between gap-2 px-3 py-[10px] text-left hover:bg-[#30283e] transition-colors ${
+                          m.marketId === market.marketId ? "bg-[#30283e]" : ""
                         }`}
                       >
                         <span className="flex min-w-0 items-center gap-2">

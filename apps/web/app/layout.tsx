@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   // new URL("") throw ERR_INVALID_URL and kill the whole build.
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: "Avensdex | Fuji Perpetuals",
-  description: "AVAX-PERP on Avalanche Fuji (43113) — capped, initially paused deployment validated on testnet with test funds only",
+  description: "AVAX-PERP on Avalanche Fuji (43113) — development preview with capped, initially paused custody",
   applicationName: "Avensdex",
   icons: {
     icon: [
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Avensdex | Fuji Perpetuals",
-    description: "AVAX-PERP on Avalanche Fuji (43113), validated on testnet",
+    description: "AVAX-PERP on Avalanche Fuji (43113), development preview",
     siteName: "Avensdex",
     images: [{ url: "/icon-512.png", width: 512, height: 512 }],
     type: "website",

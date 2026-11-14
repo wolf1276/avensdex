@@ -105,7 +105,7 @@ function OrderCard({ order, onCancel }: { order: OrderType; onCancel: () => void
   const [cancelling, setCancelling] = useState(false);
   const v = orderView(order);
   return (
-    <div className="rounded-[10px] border border-[#2A2A31] bg-[#212128] p-3">
+    <div className="rounded-[10px] border border-[#30283e] bg-[#191422] p-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {logoFor(v.baseSymbol, 16)}
@@ -118,7 +118,7 @@ function OrderCard({ order, onCancel }: { order: OrderType; onCancel: () => void
           </span>
         </div>
         <button
-          className="shrink-0 rounded-[6px] border border-[#334155] px-3 py-1.5 text-[12px] font-semibold text-[#a3a3a3] transition-colors hover:border-[#e34c4c]/40 hover:bg-[#e34c4c]/10 hover:text-[#e34c4c] disabled:opacity-50"
+          className="shrink-0 rounded-[6px] border border-[#443456] px-3 py-1.5 text-[12px] font-semibold text-[#a3a3a3] transition-colors hover:border-[#e34c4c]/40 hover:bg-[#e34c4c]/10 hover:text-[#e34c4c] disabled:opacity-50"
           disabled={cancelling}
           onClick={async () => {
             setCancelling(true);
@@ -175,7 +175,7 @@ function OrderRow({
   const sideBadge = v.sideBadge;
 
   return (
-    <tr className="border-t border-[#2A2A31] hover:bg-white/[0.02] transition-colors">
+    <tr className="border-t border-[#30283e] hover:bg-white/[0.02] transition-colors">
       <td className="pl-4 pr-2 py-[10px] text-left">
         <div className="flex items-center gap-2">
           {logoFor(baseSymbol, 16)}
@@ -200,7 +200,7 @@ function OrderRow({
       </td>
       <td className="pr-4 pl-2 py-[10px] text-right">
         <button
-          className="px-3 py-1.5 text-[12px] font-semibold rounded-[6px] border border-[#334155] text-[#a3a3a3] hover:text-[#e34c4c] hover:border-[#e34c4c]/40 hover:bg-[#e34c4c]/10 disabled:opacity-50 transition-colors"
+          className="px-3 py-1.5 text-[12px] font-semibold rounded-[6px] border border-[#443456] text-[#a3a3a3] hover:text-[#e34c4c] hover:border-[#e34c4c]/40 hover:bg-[#e34c4c]/10 disabled:opacity-50 transition-colors"
           disabled={cancelling}
           onClick={async () => {
             setCancelling(true);

@@ -71,13 +71,13 @@ export function ChartTopBar({
     }`
   const iconCls = (active: boolean) =>
     `h-7 w-7 rounded-[4px] grid place-items-center transition-colors ${
-      active ? 'text-[#f5f5f5] bg-[#2A2A31]' : 'text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2A2A31]'
+      active ? 'text-[#f5f5f5] bg-[#30283e]' : 'text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#30283e]'
     }`
   const utilityCls =
-    'h-7 w-7 rounded-[4px] grid place-items-center text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2A2A31] transition-colors'
+    'h-7 w-7 rounded-[4px] grid place-items-center text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#30283e] transition-colors'
 
   return (
-    <div className="flex items-center justify-between gap-2 px-3 shrink-0 bg-[#19191A]" style={{ minHeight: 36 }}>
+    <div className="flex items-center justify-between gap-2 px-3 shrink-0 bg-[#100e17]" style={{ minHeight: 36 }}>
       <div className="flex items-center gap-[6px] min-w-0">
         {/* Timeframes */}
         <div className="flex items-center gap-[2px]">
@@ -98,12 +98,12 @@ export function ChartTopBar({
             <ChevronDown size={14} strokeWidth={1.8} />
           </button>
           {moreOpen && (
-          <div className="absolute top-full left-0 mt-1 bg-[#19191A] border border-[#334155] rounded-lg p-1 z-50">
+          <div className="absolute top-full left-0 mt-1 bg-[#100e17] border border-[#443456] rounded-lg p-1 z-50">
             {MORE_TFS.map(tf => (
               <button
                 key={tf}
                 className={`block w-full px-3 py-[6px] text-left text-[12px] font-mono rounded-[4px] transition-colors ${
-                  tf === timeframe ? 'text-[#f5f5f5] bg-[#2A2A31]' : 'text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2A2A31]'
+                  tf === timeframe ? 'text-[#f5f5f5] bg-[#30283e]' : 'text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#30283e]'
                 }`}
                 onClick={() => {
                   onTimeframeChange(tf)

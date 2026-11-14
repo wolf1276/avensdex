@@ -56,7 +56,7 @@ export function TradeHistoryTable({ marketFilter }: { marketFilter: number | "al
         {rows.map((f) => {
           const onChain = f.txHash && !f.txHash.startsWith("dbfill");
           return (
-            <tr key={String(f.id)} className="border-t border-[#2A2A31] hover:bg-white/[0.02] transition-colors">
+            <tr key={String(f.id)} className="border-t border-[#30283e] hover:bg-white/[0.02] transition-colors">
               <td className="pl-4 pr-2 py-[10px] text-left text-[#a3a3a3]">
                 {new Date(f.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
               </td>

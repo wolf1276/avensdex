@@ -69,9 +69,9 @@ export function BottomPanel({ marketId }: { marketId: number }) {
     }`;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-none border border-[#2A2A31] bg-[#19191A]">
+    <div className="flex h-full flex-col overflow-hidden rounded-none border border-[#30283e] bg-[#100e17]">
       {/* Tab bar */}
-      <div className="flex flex-col border-b border-[#2A2A31] lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col border-b border-[#30283e] lg:flex-row lg:items-center lg:justify-between">
         <div className="flex overflow-x-auto no-scrollbar">
           {TABS.map(({ key, count }) => (
             <button key={key} className={tabCls(activeTab === key)} onClick={() => setActiveTab(key)}>
@@ -84,12 +84,12 @@ export function BottomPanel({ marketId }: { marketId: number }) {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-[8px] overflow-x-auto no-scrollbar border-t border-[#2A2A31] px-3 py-1.5 lg:border-t-0 lg:pl-0 lg:pr-3">
+        <div className="flex items-center gap-[8px] overflow-x-auto no-scrollbar border-t border-[#30283e] px-3 py-1.5 lg:border-t-0 lg:pl-0 lg:pr-3">
           {/* Market filter */}
           <div className="relative">
             <button
               onClick={() => { setMarketMenu((v) => !v); setSideMenu(false); }}
-              className="flex items-center gap-2 px-3 py-[5px] rounded-[7px] bg-[#212128] border border-[#334155] text-[12px] text-[#a3a3a3] hover:border-[#475569] hover:text-[#f5f5f5] transition-colors"
+              className="flex items-center gap-2 px-3 py-[5px] rounded-[7px] bg-[#191422] border border-[#443456] text-[12px] text-[#a3a3a3] hover:border-[#475569] hover:text-[#f5f5f5] transition-colors"
             >
               Market <span className="text-[#f5f5f5] font-medium">{marketLabel}</span>
               <CaretIcon />
@@ -98,7 +98,7 @@ export function BottomPanel({ marketId }: { marketId: number }) {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setMarketMenu(false)} />
                 {/* max-h + scroll: the list is eight entries long now. */}
-                <div className="absolute right-0 top-full mt-1 z-50 max-h-[280px] w-[160px] overflow-y-auto rounded-[8px] border border-[#334155] bg-[#212128] p-1 shadow-[0_10px_30px_rgba(0,0,0,.5)]">
+                <div className="absolute right-0 top-full mt-1 z-50 max-h-[280px] w-[160px] overflow-y-auto rounded-[8px] border border-[#443456] bg-[#191422] p-1 shadow-[0_10px_30px_rgba(0,0,0,.5)]">
                   <MenuItem active={marketFilter === "all"} onClick={() => { setMarketFilter("all"); setMarketMenu(false); }}>All markets</MenuItem>
                   {Object.values(ACTIVE_MARKETS).map((m) => (
                     <MenuItem key={m.marketId} active={marketFilter === m.marketId} onClick={() => { setMarketFilter(m.marketId); setMarketMenu(false); }}>
@@ -113,7 +113,7 @@ export function BottomPanel({ marketId }: { marketId: number }) {
           <div className="relative">
             <button
               onClick={() => { setSideMenu((v) => !v); setMarketMenu(false); }}
-              className="flex items-center gap-2 px-3 py-[5px] rounded-[7px] bg-[#212128] border border-[#334155] text-[12px] text-[#a3a3a3] hover:border-[#475569] hover:text-[#f5f5f5] transition-colors"
+              className="flex items-center gap-2 px-3 py-[5px] rounded-[7px] bg-[#191422] border border-[#443456] text-[12px] text-[#a3a3a3] hover:border-[#475569] hover:text-[#f5f5f5] transition-colors"
             >
               <LinesIcon />
               <span className="text-[#f5f5f5] font-medium">{sideLabel}</span>
@@ -122,7 +122,7 @@ export function BottomPanel({ marketId }: { marketId: number }) {
             {sideMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setSideMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 w-[120px] rounded-[8px] border border-[#334155] bg-[#212128] p-1 shadow-[0_10px_30px_rgba(0,0,0,.5)]">
+                <div className="absolute right-0 top-full mt-1 z-50 w-[120px] rounded-[8px] border border-[#443456] bg-[#191422] p-1 shadow-[0_10px_30px_rgba(0,0,0,.5)]">
                   {(["both", "long", "short"] as const).map((s) => (
                     <MenuItem key={s} active={sideFilter === s} onClick={() => { setSideFilter(s); setSideMenu(false); }}>
                       {s === "both" ? "Both" : s === "long" ? "Long" : "Short"}
@@ -160,7 +160,7 @@ function MenuItem({
     <button
       onClick={onClick}
       className={`block w-full text-left px-3 py-[6px] rounded-[5px] text-[12.5px] transition-colors ${
-        active ? "text-[#f5f5f5] bg-[#212128]" : "text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#212128]"
+        active ? "text-[#f5f5f5] bg-[#191422]" : "text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#191422]"
       }`}
     >
       {children}

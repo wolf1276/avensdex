@@ -171,13 +171,13 @@ export function OrderBook({ market }: { market: MarketConfig }) {
                 {tickOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setTickOpen(false)} />
-                    <div className="absolute left-0 top-full mt-1 z-50 rounded-[8px] border border-[#334155] bg-[#212128] p-1 shadow-[0_10px_30px_rgba(0,0,0,.5)]">
+                    <div className="absolute left-0 top-full mt-1 z-50 rounded-[8px] border border-[#443456] bg-[#191422] p-1 shadow-[0_10px_30px_rgba(0,0,0,.5)]">
                       {TICKS.map((t, i) => (
                         <button
                           key={t}
                           onClick={() => { setTickIdx(i); setTickOpen(false); }}
                           className={`block w-full text-left px-3 py-[5px] rounded-[5px] transition-colors ${
-                            i === safeTickIdx ? "text-[#f5f5f5] bg-[#212128]" : "text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#212128]"
+                            i === safeTickIdx ? "text-[#f5f5f5] bg-[#191422]" : "text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#191422]"
                           }`}
                         >
                           {formatTick(t)}
@@ -234,7 +234,7 @@ export function OrderBook({ market }: { market: MarketConfig }) {
 
           {/* Spread row */}
           <div
-            className="grid grid-cols-3 px-[8px] py-[7px] bg-[#212128] font-mono text-[11.5px] font-semibold shrink-0"
+            className="grid grid-cols-3 px-[8px] py-[7px] bg-[#191422] font-mono text-[11.5px] font-semibold shrink-0"
           >
             <span className="font-medium text-[#f5f5f5]">{spreadAbs ?? "—"}</span>
             <span className="text-center text-[#f5f5f5]">Spread</span>
@@ -247,7 +247,7 @@ export function OrderBook({ market }: { market: MarketConfig }) {
         /* Trades tab */
         <div className="flex flex-col flex-1 overflow-hidden">
           <div
-            className="grid grid-cols-3 px-[8px] py-[6px] font-mono text-[11px] text-[#9fb0c9] border-b border-[#2A2A31] shrink-0"
+            className="grid grid-cols-3 px-[8px] py-[6px] font-mono text-[11px] text-[#9fb0c9] border-b border-[#30283e] shrink-0"
             style={{ letterSpacing: ".02em" }}
           >
             <span>Price</span>
@@ -377,8 +377,8 @@ function EmptyRows({ count, side }: { count: number; side: "ask" | "bid" }) {
             className={`h-[5px] rounded-full opacity-[0.06] ${side === "ask" ? "bg-[#e06a6a]" : "bg-[#54bd7c]"}`}
             style={{ width: widths[i % widths.length] }}
           />
-          <div className="h-[5px] rounded-full bg-[#334155] opacity-[0.06] ml-auto" style={{ width: 36 }} />
-          <div className="h-[5px] rounded-full bg-[#334155] opacity-[0.06] ml-auto" style={{ width: 44 }} />
+          <div className="h-[5px] rounded-full bg-[#443456] opacity-[0.06] ml-auto" style={{ width: 36 }} />
+          <div className="h-[5px] rounded-full bg-[#443456] opacity-[0.06] ml-auto" style={{ width: 44 }} />
         </div>
       ))}
     </>

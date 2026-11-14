@@ -7,7 +7,7 @@ import {
 
 export const metadata: Metadata = {
   title: 'Avensdex — Find your edge. Keep your flow.',
-  description: 'A perpetuals workspace connected to Avalanche Fuji (43113): AVAX-PERP with capped, honest testnet validation, wallet-signed vanilla limit orders and on-chain custody. Test funds only.',
+  description: 'A perpetuals workspace connected to Avalanche Fuji (43113): AVAX-PERP with capped validation, wallet-signed vanilla limit orders and on-chain custody.',
 };
 
 export default function Home() {

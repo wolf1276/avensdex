@@ -69,7 +69,7 @@ function MarketRow({ market }: { market: MarketConfig }) {
   const oi = data ? data.longOI + data.shortOI : null;
 
   return (
-    <div className="flex flex-col gap-3 border-b border-[#2A2A31] px-4 py-4 last:border-b-0 transition-colors hover:bg-white/[0.02] md:grid md:grid-cols-[1.5fr_.9fr_.7fr_.9fr_.9fr_.6fr_.7fr] md:items-center md:gap-0">
+    <div className="flex flex-col gap-3 border-b border-[#30283e] px-4 py-4 last:border-b-0 transition-colors hover:bg-white/[0.02] md:grid md:grid-cols-[1.5fr_.9fr_.7fr_.9fr_.9fr_.6fr_.7fr] md:items-center md:gap-0">
       <div className="flex items-center justify-between gap-2 md:block">
         <div className="flex flex-col gap-1">
           <span className="flex items-center gap-2 text-[14px] font-semibold">
@@ -82,7 +82,7 @@ function MarketRow({ market }: { market: MarketConfig }) {
         </div>
         <Link
           href={`/trade/${market.symbol}`}
-          className="inline-flex shrink-0 rounded-[6px] border border-[#2A2A31] bg-[#19191A] px-3 py-2 text-[12px] font-semibold text-[#f5f5f5] transition-colors hover:border-[#475569] md:hidden"
+          className="inline-flex shrink-0 rounded-[6px] border border-[#30283e] bg-[#100e17] px-3 py-2 text-[12px] font-semibold text-[#f5f5f5] transition-colors hover:border-[#475569] md:hidden"
         >
           Trade
         </Link>
@@ -121,7 +121,7 @@ function MarketRow({ market }: { market: MarketConfig }) {
       <div className="hidden text-right md:block">
         <Link
           href={`/trade/${market.symbol}`}
-          className="inline-flex rounded-[6px] border border-[#2A2A31] bg-[#19191A] px-3 py-2 text-[12px] font-semibold text-[#f5f5f5] transition-colors hover:border-[#475569]"
+          className="inline-flex rounded-[6px] border border-[#30283e] bg-[#100e17] px-3 py-2 text-[12px] font-semibold text-[#f5f5f5] transition-colors hover:border-[#475569]"
         >
           Trade
         </Link>
@@ -158,13 +158,13 @@ export function MarketsTable({ markets }: { markets: MarketConfig[] }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search markets…"
           aria-label="Search markets"
-          className="w-full max-w-[280px] rounded-[6px] border border-[#2A2A31] bg-[#212128] px-3 py-2 text-[13px] text-[#f5f5f5] outline-none placeholder:text-[#737373] focus:border-[#475569]"
+          className="w-full max-w-[280px] rounded-[6px] border border-[#30283e] bg-[#191422] px-3 py-2 text-[13px] text-[#f5f5f5] outline-none placeholder:text-[#737373] focus:border-[#475569]"
         />
       )}
 
-      <div className="overflow-hidden rounded-[10px] border border-[#2A2A31] bg-[#212128]">
+      <div className="overflow-hidden rounded-[10px] border border-[#30283e] bg-[#191422]">
         {/* Column header — desktop only */}
-        <div className="hidden grid-cols-[1.5fr_.9fr_.7fr_.9fr_.9fr_.6fr_.7fr] border-b border-[#2A2A31] px-4 py-3 text-[11px] uppercase tracking-[.08em] text-[#737373] md:grid">
+        <div className="hidden grid-cols-[1.5fr_.9fr_.7fr_.9fr_.9fr_.6fr_.7fr] border-b border-[#30283e] px-4 py-3 text-[11px] uppercase tracking-[.08em] text-[#737373] md:grid">
           <div>Market</div>
           <div>Price</div>
           <div>24h</div>

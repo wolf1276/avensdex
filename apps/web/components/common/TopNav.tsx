@@ -25,7 +25,7 @@ export function TopNav() {
 
   return (
     <header
-      className="relative shrink-0 border-b border-[#2A2A31] bg-[#212128]"
+      className="relative shrink-0 border-b border-[#30283e] bg-[#191422]"
       style={{ paddingTop: "max(6px, env(safe-area-inset-top))" }}
     >
       <div className="flex items-center justify-between gap-2 px-3 pb-[6px] sm:px-[14px]">
@@ -36,7 +36,7 @@ export function TopNav() {
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-[7px] text-[#a3a3a3] hover:bg-[#19191A] hover:text-[#f5f5f5] transition-colors md:hidden"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-[7px] text-[#a3a3a3] hover:bg-[#100e17] hover:text-[#f5f5f5] transition-colors md:hidden"
           >
             {menuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -84,8 +84,8 @@ export function TopNav() {
             className="fixed inset-0 z-40 bg-black/50 md:hidden"
             onClick={() => setMenuOpen(false)}
           />
-          <nav className="absolute inset-x-0 top-full z-50 border-b border-[#2A2A31] bg-[#212128] p-2 shadow-[0_20px_40px_rgba(0,0,0,.5)] md:hidden">
-            <div className="mb-2 flex items-center justify-between gap-2 border-b border-[#2A2A31] px-2 pb-3 sm:hidden">
+          <nav className="absolute inset-x-0 top-full z-50 border-b border-[#30283e] bg-[#191422] p-2 shadow-[0_20px_40px_rgba(0,0,0,.5)] md:hidden">
+            <div className="mb-2 flex items-center justify-between gap-2 border-b border-[#30283e] px-2 pb-3 sm:hidden">
               <span className="text-[13px] font-medium text-[#a3a3a3]">Network</span>
               <NetworkBadge />
             </div>
@@ -97,7 +97,7 @@ export function TopNav() {
                   href={t.href}
                   onClick={() => setMenuOpen(false)}
                   className={`block rounded-[8px] px-4 py-3 text-[15px] font-medium transition-colors ${
-                    active ? "bg-[#19191A] text-[#f5f5f5]" : "text-[#a3a3a3] hover:bg-[#19191A] hover:text-[#f5f5f5]"
+                    active ? "bg-[#100e17] text-[#f5f5f5]" : "text-[#a3a3a3] hover:bg-[#100e17] hover:text-[#f5f5f5]"
                   }`}
                 >
                   {t.label}

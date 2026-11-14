@@ -33,5 +33,5 @@ export const useCases: UseCase[] = [
   { title: 'An order ticket that stays in view', description: 'Choose a direction, size and leverage up to 10x. Orders are signed vanilla limits — reduce-only, post-only, IOC, market and TP/SL are not admitted by the settlement contract. Review margin and liquidation estimates before signing.' },
   { title: 'Your activity, in one place', description: 'Open orders are tracked in this browser and reconciled against chain state. Positions, fills and funding history appear once the admission backend indexes them.' },
   { title: 'Made for the smaller screen, too', description: 'Move between chart, book, ticket and positions on mobile. Dedicated long and short controls bring the order ticket into reach.' },
-  { title: 'An honest Fuji validation path', description: 'The exchange runs on Avalanche Fuji C-Chain (43113) against a capped, initially paused AVAX-PERP/USDC deployment. Deposits activate only after owner qualification. Test funds only — not mainnet, not investment advice.' },
+  { title: 'An honest Fuji validation path', description: 'The exchange runs on Avalanche Fuji C-Chain (43113) against a capped, initially paused AVAX-PERP/USDC deployment. Deposits activate only after owner qualification. Leveraged trading carries risk; no investment return is promised.' },
 ];

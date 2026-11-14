@@ -16,15 +16,15 @@ export function NetworkBadge({ className = "" }: { className?: string }) {
     <span
       role="status"
       aria-label={`Network: ${config.label}`}
-      title={`${config.label}. Balances are test funds; see the banner for backend connectivity.`}
+      title={`${config.label}. Chain 43113; see trading availability below.`}
       className={`flex items-center gap-[6px] rounded-[7px] px-[9px] py-[5px] text-[12px] font-medium ${className}`}
       style={{
-        color: "#ff9440",
-        background: "rgba(255,148,64,0.12)",
-        boxShadow: "inset 0 0 0 1px rgba(255,148,64,0.35)",
+        color: "#c5a4ff",
+        background: "rgba(160,107,255,0.12)",
+        boxShadow: "inset 0 0 0 1px rgba(160,107,255,0.35)",
       }}
     >
-      <span aria-hidden="true" className="h-[6px] w-[6px] shrink-0 rounded-full bg-[#ff9440]" />
+      <span aria-hidden="true" className="h-[6px] w-[6px] shrink-0 rounded-full bg-[#c5a4ff]" />
       {config.shortLabel}
     </span>
   );

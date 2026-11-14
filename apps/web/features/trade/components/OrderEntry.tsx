@@ -228,11 +228,11 @@ export function OrderEntry({
     <div className="relative flex flex-col">
       <div className="flex flex-col gap-[10px] p-3">
         {/* Long / Short */}
-        <div className="grid grid-cols-2 rounded-[9px] overflow-hidden bg-[#212128] border border-[#334155]">
+        <div className="grid grid-cols-2 rounded-[9px] overflow-hidden bg-[#191422] border border-[#443456]">
           <button
             onClick={() => setSide("buy")}
             className={`py-[9px] text-center text-[12.5px] font-semibold transition-colors ${
-              side === "buy" ? "bg-[#1fae5b] text-white" : "text-[#a3a3a3] hover:text-[#f5f5f5]"
+              side === "buy" ? "bg-primary text-primary-foreground" : "text-[#a3a3a3] hover:text-[#f5f5f5]"
             }`}
           >
             Long/Buy
@@ -240,7 +240,7 @@ export function OrderEntry({
           <button
             onClick={() => setSide("sell")}
             className={`py-[9px] text-center text-[12.5px] font-semibold transition-colors ${
-              side === "sell" ? "bg-[#e8716f] text-white" : "text-[#a3a3a3] hover:text-[#f5f5f5]"
+              side === "sell" ? "bg-primary text-primary-foreground" : "text-[#a3a3a3] hover:text-[#f5f5f5]"
             }`}
           >
             Short/Sell
@@ -249,7 +249,7 @@ export function OrderEntry({
 
         {/* Order type: only vanilla limit orders exist on Fuji (kind=0). */}
         <div className="grid grid-cols-[minmax(0,1fr)_minmax(116px,1fr)] gap-2">
-          <div className="grid h-[36px] grid-cols-2 rounded-[8px] bg-[#212128] p-[2px]">
+          <div className="grid h-[36px] grid-cols-2 rounded-[8px] bg-[#191422] p-[2px]">
             <button
               type="button"
               className="rounded-[6px] text-[11.5px] font-bold text-[#4b5563] cursor-not-allowed"
@@ -260,12 +260,12 @@ export function OrderEntry({
             </button>
             <div
               aria-current="true"
-              className="grid place-items-center rounded-[6px] border border-[#46d985] bg-[#24332c] text-[11.5px] font-bold text-[#46d985]"
+              className="grid place-items-center rounded-[6px] border border-primary/50 bg-primary/10 text-[11.5px] font-bold text-[#c5a4ff]"
             >
               Limit
             </div>
           </div>
-          <div className="flex h-[36px] min-w-0 items-center justify-end gap-2 rounded-[8px] bg-[#212128] px-3">
+          <div className="flex h-[36px] min-w-0 items-center justify-end gap-2 rounded-[8px] bg-[#191422] px-3">
             <span className="font-mono text-[12.5px] font-medium text-[#8f98aa]">$</span>
             <input
               className="min-w-0 flex-1 bg-transparent text-right font-mono text-[12.5px] font-medium text-[#f5f5f5] outline-none placeholder:text-[#737373]"
@@ -295,7 +295,7 @@ export function OrderEntry({
         </div>
 
         {/* Order size field */}
-        <div className="bg-[#212128] border border-[#334155] rounded-[9px] p-2 flex flex-col gap-1">
+        <div className="bg-[#191422] border border-[#443456] rounded-[9px] p-2 flex flex-col gap-1">
           <div className="flex items-center justify-between text-[12px] text-[#a3a3a3]">
             <div className="flex items-center gap-[5px]">
               <span>Order Size</span>
@@ -314,7 +314,7 @@ export function OrderEntry({
             <button
               type="button"
               onClick={() => setSizeInQuote((v) => !v)}
-              className="flex items-center gap-1.5 px-2 py-[3px] bg-[#212128] border border-[#334155] rounded-[6px] text-[#f5f5f5] text-[12px] font-medium transition-colors hover:border-[#475569]"
+              className="flex items-center gap-1.5 px-2 py-[3px] bg-[#191422] border border-[#443456] rounded-[6px] text-[#f5f5f5] text-[12px] font-medium transition-colors hover:border-[#475569]"
               title="Toggle order size denomination"
             >
               {sizeInQuote ? <UsdcLogo size={15} /> : logoFor(baseSymbol, 15)}
@@ -346,7 +346,7 @@ export function OrderEntry({
             step={1}
             value={effectiveLeverage}
             onChange={(e) => setLeverage(Number(e.target.value))}
-            className="w-full h-[4px] cursor-pointer accent-[#f5f5f5]"
+            className="w-full h-[4px] cursor-pointer accent-primary"
             aria-label="Order leverage"
           />
           <div className="flex justify-between font-mono text-[10.5px] text-[#737373] mt-[6px]">
@@ -368,10 +368,8 @@ export function OrderEntry({
           <button
             onClick={handleConnect}
             disabled={connecting}
-            className="w-full py-[13px] rounded-[9px] text-[13.5px] font-semibold text-[#19191A] transition-colors disabled:opacity-50"
-            style={{ background: "#f5f5f5", letterSpacing: ".01em" }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#e5e7eb")}
-            onMouseOut={(e) => (e.currentTarget.style.background = "#f5f5f5")}
+            className="w-full py-[13px] rounded-[9px] text-[13.5px] font-semibold bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            style={{ letterSpacing: ".01em" }}
           >
             {connecting ? "Connecting…" : "Connect Wallet"}
           </button>
@@ -395,7 +393,7 @@ export function OrderEntry({
         )}
 
         {/* Order summary */}
-        <div className="flex flex-col gap-1.5 rounded-[9px] bg-[#212128] p-3">
+        <div className="flex flex-col gap-1.5 rounded-[9px] bg-[#191422] p-3">
           <div className={rowCls}>
             <span>Limit Price</span>
             <span className="font-mono text-[#f5f5f5]">

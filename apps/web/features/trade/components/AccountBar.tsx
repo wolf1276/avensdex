@@ -37,7 +37,7 @@ export function AccountBar() {
     health?.freeCollateral !== undefined ? amountToHuman(health.freeCollateral) : deposited;
 
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-[11px] border-b border-[#334155]">
+    <div className="flex items-center justify-between gap-3 px-4 py-[11px] border-b border-[#443456]">
       <div className="flex items-center gap-5">
         <Stat
           label="Deposited"
