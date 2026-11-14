@@ -10,7 +10,7 @@
   "packageManager": "npm@10.9.8",
   "scripts": {
     "typecheck": "tsc --project tsconfig.json",
-    "test:funding": "node --experimental-strip-types --test packages/funding/preview.test.ts",
+    "test:funding": "node --experimental-strip-types --test packages/funding/preview.test.ts packages/funding/controller.test.ts",
     "test:funding:rust": "cargo test --locked --manifest-path packages/funding/reference/Cargo.toml",
     "test:protocol": "node --experimental-strip-types --test packages/protocol/*.test.mjs",
     "test:clob": "node --experimental-strip-types --test packages/clob/*.test.mjs services/clob/*.test.mjs",

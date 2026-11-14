@@ -26,7 +26,8 @@ References: `docs/PHASE3_STATUS.md`, `docs/PAUSED_DEPLOYMENT_RECOVERY.md`, `docs
 ## 2. Protocol work: complete before claiming only integration remains
 
 - [ ] Specify independent index, validated mark and premium observations; reject matcher-only price control, stale data and manipulation.
-- [ ] Implement baseline/adaptive controller, smoothing, deadband, slope/absolute caps, configuration authority and parameter bounds.
+- [x] Add a pure local funding-controller reference using existing baseline/adaptive math, epoch/revision checks, expiry, stale-gap handling and fractional index carry; see `docs/FUNDING_CONTROLLER.md`.
+- [ ] Implement and review the onchain baseline/adaptive controller, smoothing, deadband, slope/absolute caps, configuration authority and parameter bounds; the local reference does not satisfy contract integration.
 - [ ] Implement funding epochs, monotonic publication, replay protection, rate expiry, stale-gap behavior and index settlement.
 - [ ] Differential-test funding against source references; test both signs, rounding carry, payer clipping, restart and conservation over multiple epochs.
 - [ ] Extend the single canonical ledger with isolated strategy allocation, owned spot inventory, reserves, costs and insurance accounting; no second spendable balance.
