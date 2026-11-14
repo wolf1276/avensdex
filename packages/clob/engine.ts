@@ -14,7 +14,7 @@ export interface Trade {
   settlementIntentId?: string;
 }
 export interface Event {
-  streamId: string; marketId: number; seq: number; at: number; type: 'order' | 'level' | 'bbo' | 'trade' | 'settlement' | 'settlementOutcome' | 'positions';
+  streamId: string; marketId: number; seq: number; at: number; type: 'order' | 'level' | 'bbo' | 'trade' | 'settlement' | 'settlementOutcome' | 'positions' | 'positionsUnavailable';
   data: Record<string, unknown>;
 }
 export interface Positions {
@@ -23,8 +23,9 @@ export interface Positions {
 export type Command = { type: 'submit'; at: number; order: Order }
   | { type: 'cancel'; at: number; id: string; trader: string }
   | { type: 'tick'; at: number }
-  // Trusted reconciler input only, never a public API. No live producer exists yet.
+  // Trusted canonical reader input only; never a public admission API.
   | { type: 'positions'; at: number; snapshot: Positions }
+  | { type: 'invalidatePositions'; at: number; reason: string }
   // Trusted canonical outcome input only, never a public API.
   | { type: 'settlementOutcome'; at: number; tradeId: string; intentId: string;
       status: Exclude<TradeSettlementStatus, 'blocked'>; reason: string | null };
@@ -117,6 +118,7 @@ export function settlementTransitionAllowed(from: TradeSettlementStatus, to: Tra
 function execute(s: State, c: Command): Event[] {
   exact(c, c.type === 'submit' ? ['type', 'at', 'order'] : c.type === 'cancel' ? ['type', 'at', 'id', 'trader']
     : c.type === 'positions' ? ['type', 'at', 'snapshot']
+    : c.type === 'invalidatePositions' ? ['type', 'at', 'reason']
     : c.type === 'settlementOutcome' ? ['type', 'at', 'tradeId', 'intentId', 'status', 'reason'] : ['type', 'at']);
   time(c.at); if (c.at < s.clock || s.seq > Number.MAX_SAFE_INTEGER - 10000) throw Error('CLOCK_OR_SEQUENCE_BOUNDS');
   s.clock = c.at;
@@ -155,6 +157,10 @@ function execute(s: State, c: Command): Event[] {
         || BigInt(value) < -(10n ** 15n) || BigInt(value) > 10n ** 15n) throw Error('INVALID_POSITION');
     }
     s.positions = structuredClone(p); emit('positions', structuredClone(p) as unknown as Record<string, unknown>);
+  } else if (c.type === 'invalidatePositions') {
+    if (typeof c.reason !== 'string' || !/^[A-Z0-9_]{1,80}$/.test(c.reason)) throw Error('INVALID_POSITION_REASON');
+    s.positions = null;
+    emit('positionsUnavailable', { reason: c.reason });
   } else if (c.type === 'cancel') {
     trader(c.trader); const o = s.orders.get(c.id);
     if (!o || o.trader !== c.trader || !o.resting) throw Error('ORDER_NOT_CANCELLABLE'); cancel(o, 'cancelled');

@@ -26,6 +26,7 @@ References: `docs/PHASE3_STATUS.md`, `docs/PAUSED_DEPLOYMENT_RECOVERY.md`, `docs
 ## 2. Protocol work: complete before claiming only integration remains
 
 - [x] Connect canonical settlement-journal reconciliation to durable matcher/feed outcomes and pending-match capacity; generated-signature, restart/reorg and loopback tests are local fixtures, not public execution.
+- [x] Add complete bounded policy-confirmed position aggregation, paired-provider ledger checks, real block timestamps and fail-closed service/feed refresh; mocked RPC/loopback evidence only, no public deployment or unsupported-order activation.
 
 - [ ] Specify independent index, validated mark and premium observations; reject matcher-only price control, stale data and manipulation.
 - [x] Add a pure local funding-controller reference using existing baseline/adaptive math, epoch/revision checks, expiry, stale-gap handling and fractional index carry; see `docs/FUNDING_CONTROLLER.md`.

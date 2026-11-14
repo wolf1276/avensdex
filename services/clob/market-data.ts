@@ -1,9 +1,12 @@
 import { createServer } from 'node:http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { JournaledMatcher } from '../../packages/clob/journal.ts';
-import { MAX_FEED_BYTES, type Command, type Event } from '../../packages/clob/engine.ts';
+import { MAX_FEED_BYTES, exact, type Command, type Event } from '../../packages/clob/engine.ts';
 import { admitSigned } from '../../packages/clob/admission.ts';
 import { SettlementOutcomeBridge } from '../../packages/clob/settlement-bridge.ts';
+import { readPolicyConfirmedPositions } from '../../packages/clob/settlement-reader.ts';
+import type { SettlementIdentity } from '../../packages/clob/settlement-journal.ts';
+import type { PublicClient } from 'viem';
 
 export const MAX_CLIENTS = 16;
 export const MAX_BUFFERED_BYTES = MAX_FEED_BYTES;
@@ -87,6 +90,23 @@ export async function startMarketData(journal: JournaledMatcher, port = 8787, cl
       for (const client of wss.clients) sendBounded(client, text);
     }
   }
+  let positionQueue: Promise<void> = Promise.resolve();
+  function refreshPositions(primary: PublicClient, secondary: PublicClient, identity: SettlementIdentity,
+    policy: { confirmations: number; maxPairs: number }) {
+    const capturedIdentity = structuredClone(identity), capturedPolicy = structuredClone(policy);
+    const run = positionQueue.then(() => refreshPositionsNow(primary, secondary, capturedIdentity, capturedPolicy));
+    positionQueue = run.then(() => undefined, () => undefined);
+    return run;
+  }
+  async function refreshPositionsNow(primary: PublicClient, secondary: PublicClient, identity: SettlementIdentity,
+    policy: { confirmations: number; maxPairs: number }) {
+    exact(policy, ['confirmations', 'maxPairs']);
+    if (identity.chainId !== journal.binding.chainId || identity.settlementContract !== journal.binding.settlementContract) throw Error('POSITION_MATCHER_MISMATCH');
+    apply({ type: 'invalidatePositions', at: clock(), reason: 'CANONICAL_REFRESH_REQUIRED' });
+    const snapshot = await readPolicyConfirmedPositions(primary, secondary, identity, { ...policy, now: clock() });
+    // Revalidate source-block age at publication, not only when the potentially slow RPC read began.
+    return apply({ type: 'positions', at: clock(), snapshot });
+  }
   let stopped = false;
   const timer = setInterval(() => {
     if (stopped || !journal.writable) return;
@@ -104,7 +124,7 @@ export async function startMarketData(journal: JournaledMatcher, port = 8787, cl
     });
   } catch (error) { clearInterval(timer); wss.close(); throw error; }
   const address = server.address(); if (!address || typeof address === 'string') throw Error('LISTEN_FAILED');
-  return { port: address.port, apply, applySigned, reconcileSettlement,
+  return { port: address.port, apply, applySigned, reconcileSettlement, refreshPositions,
     async close() {
       stopped = true; clearInterval(timer);
       for (const client of wss.clients) client.terminate();

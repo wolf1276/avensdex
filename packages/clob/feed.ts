@@ -162,6 +162,10 @@ export class MarketDataFeed {
           break;
         }
         case 'positions': s.confirmedPositions = checkPositions(data, input.at); break;
+        case 'positionsUnavailable':
+          exact(data, ['reason']);
+          if (typeof data.reason !== 'string' || !/^[A-Z0-9_]{1,80}$/.test(data.reason)) return this.gap();
+          s.confirmedPositions = null; break;
         default: return this.gap();
       }
       s.bestBid = s.bids[0]?.price18 ?? null; s.bestAsk = s.asks[0]?.price18 ?? null;
