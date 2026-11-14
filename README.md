@@ -116,6 +116,16 @@ npm audit --omit=dev
 
 `npm test` runs the TypeScript funding/protocol/CLOB suites, the Python read-only network tests, the Foundry suites and a fresh loopback-only Anvil settlement lifecycle with generated fixture keys.
 
+### Offline deployment plan
+
+The offline plan CLI reads a planner input and reviewed artifacts from local files and prints the existing validated paused plan, including its plan hash and disabled/approval-required status. It has no signer, RPC, broadcast or journal path:
+
+```sh
+npm run deployment:plan -- /absolute/path/planner-input.json /absolute/path/reviewed-artifacts.json
+```
+
+The artifacts file must already match the planner's `{ abi, bytecode }` schema for `AvensVault`, `AvensFeedOracle` and `AvensSettlement`; the CLI does not read Foundry output or compile contracts. See [paused deployment planning](docs/PAUSED_DEPLOYMENT_RECOVERY.md#offline-plan-cli) for input limits and artifact preparation.
+
 ### Optional read-only network checks
 
 Requires Python 3.12 and no wallet or secrets:
@@ -169,7 +179,7 @@ Local verification checkpoint: committed revision `643aa16`. Clean tracked-sourc
 
 Additional checks against the same contract source covered `27` local historical Fuji-fork receipts at block `61048431`. Root `npm audit --omit=dev` reported `0` vulnerabilities at that checkpoint; this is a point-in-time dependency check, not a security audit.
 
-The current tree adds `17` protocol tests for the read-only two-provider deployment reader and its fixed-endpoint inspection CLI; `npm run typecheck` and `npm run test:protocol` (`44` tests) pass locally. These are unit fixtures with mocked RPC providers, not public Fuji reads.
+The current tree adds `17` protocol tests for the read-only two-provider deployment reader and its fixed-endpoint inspection CLI, plus `4` offline deployment-plan CLI tests; `npm run typecheck` and `npm run test:protocol` (`48` tests) pass locally. These are unit fixtures with mocked RPC providers or local JSON files, not public Fuji reads or a deployment.
 
 These are local or pinned historical-fork results. They are not public Fuji transactions, public finality, liquidity, asset qualification or a hosted service. Counts are revision- and environment-scoped and will change as the repository changes. No public addresses, receipt links, deployments or fills are claimed.
 

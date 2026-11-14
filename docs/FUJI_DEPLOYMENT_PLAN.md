@@ -35,7 +35,7 @@ The contract/wallet public identity is not secret. Keystore/passwords, signed ra
 
 ## Offline paused-deployment planner and recovery
 
-The [bounded planner/journal](PAUSED_DEPLOYMENT_RECOVERY.md) now constructs only the three exact creations and settlement binding, binds reviewed artifacts/roles/nonces/fees to a plan hash, and reconciles actual signed identity, canonical receipts and expected runtime. Its 15 local fixture tests pass. A separate [read-only two-provider reader and inspection CLI](PAUSED_DEPLOYMENT_RECOVERY.md#read-only-reader-cli) can inspect transactions, receipts, blocks and code. All views remain approval-required/execution-disabled. The planner is not a signing/broadcast CLI, current asset approval or authorization; these operator gates remain incomplete.
+The [bounded planner/journal](PAUSED_DEPLOYMENT_RECOVERY.md) now constructs only the three exact creations and settlement binding, binds reviewed artifacts/roles/nonces/fees to a plan hash, and reconciles actual signed identity, canonical receipts and expected runtime. Its 15 local fixture tests pass. A separate [read-only two-provider reader and inspection CLI](PAUSED_DEPLOYMENT_RECOVERY.md#read-only-reader-cli) can inspect transactions, receipts, blocks and code. An offline plan CLI prints the planner's validated JSON from external planner/artifact files without signing, broadcasting or writing a journal. All views remain approval-required/execution-disabled. The planner is not a signing/broadcast CLI, current asset approval or authorization; these operator gates remain incomplete.
 
 ## Read-only preparation observation
 

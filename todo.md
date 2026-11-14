@@ -78,6 +78,7 @@ Evidence: [foundation checks](docs/FOUNDATION_CHECKS.md), [Phase 1 scope](docs/P
 - [ ] Reconcile original NEAR liabilities/pending state under original code; never reset or silently transfer funded state. Preserve immutable labeled history.
 - [x] Publish [current Fuji deployment/verification prerequisites](docs/FUJI_CLOB_RUNBOOK.md), truthful unavailable-state setup and measured local benchmark. These are instructions, not deployment evidence or authorization.
 - [x] Add a fixed-endpoint read-only deployment inspection CLI for two-provider head/block/transaction/receipt/code observations; local unit tests only, no signer, journal integration or public deployment evidence.
+- [x] Add an offline deployment-plan CLI that reads external planner input and reviewed artifacts, reuses existing planner validation and prints the paused plan/hash; no signer, RPC, broadcast, activation or journal mutation.
 - [ ] Complete actual deployment/signing tools, public safe-stop/recovery proof, demo and release README once the genuine lifecycle passes; publish only to the confirmed repository.
 
 **Gate:** reconciled genuine Fuji lifecycle with no unresolved custody/security blocker. PAPER, local VM and fork results remain distinct. Centralized matching is disclosed. No profitability, liquidity, latency or decentralization claim without applicable evidence.

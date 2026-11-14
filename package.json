@@ -15,6 +15,7 @@
     "test:protocol": "node --experimental-strip-types --test packages/protocol/*.test.mjs",
     "test:clob": "node --experimental-strip-types --test packages/clob/*.test.mjs services/clob/*.test.mjs",
     "clob:serve": "node --experimental-strip-types services/clob/start.ts",
+    "deployment:plan": "node --experimental-strip-types packages/protocol/deployment-plan-cli.ts",
     "deployment:read": "node --experimental-strip-types packages/protocol/deployment-reader-cli.ts",
     "bench:clob": "node --experimental-strip-types scripts/benchmark-clob.mjs",
     "test:network": "python3 -m unittest discover -s scripts -t . -v",

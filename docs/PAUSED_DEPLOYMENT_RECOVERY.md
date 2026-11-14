@@ -15,6 +15,16 @@ All native values are zero. Gas limits multiplied by maximum fees must fit the s
 
 `validateDeploymentPlan` rebuilds from trusted inputs/artifacts; a supplied hash alone proves neither authorization nor qualification. All returned plans/views retain `approvalRequired:true`, `executionEnabled:false`, `depositsActive:false`. No activation, rate publication, approvals, collateral transfer, trade, hedge, upgrade, cancellation or replacement transaction is encodable.
 
+## Offline plan CLI
+
+`npm run deployment:plan -- <planner-input.json> <reviewed-artifacts.json>` reads exactly two local regular files, rebuilds the plan through `buildDeploymentPlan` and prints it as JSON, including `planHash`, `approvalRequired:true`, `executionEnabled:false` and `depositsActive:false`. Each file must be non-empty and at most **1,048,576 bytes**. Missing, non-regular, oversized or malformed JSON files and invalid planner fields fail closed with a bounded error code. Expiry is checked against the current UTC Unix time; the plan hash does not depend on the time of the run.
+
+The input file is the existing schema-1 planner input accepted by `buildDeploymentPlan`, not a new format. It must contain exactly the planner's top-level keys; extra fields are rejected.
+
+The artifacts file must be an object with exactly `AvensVault`, `AvensFeedOracle` and `AvensSettlement`, each containing `abi` (the reviewed ABI array) and `bytecode` (a `0x`-prefixed creation-code string). Raw Foundry artifact JSON does not fit this schema because Foundry stores bytecode at `bytecode.object`. The CLI does not read `contracts/evm/out`, compile contracts or qualify artifacts. The operator must review the source/release, extract each `abi` and `bytecode.object`, verify the resulting hashes and constructor/bind surface, and keep the approved files outside generated build output. The planner validates the required constructors and the vault binding function; preparing these files is not deployment authorization.
+
+The CLI has no signer, wallet, RPC, broadcast, activation, approval or journal-write path. Printing a plan is not authorization to sign or deploy.
+
 ## Durable evidence
 
 `DeploymentJournal.open(directory, { input, artifacts, expectedRuntimeHashes, reader, confirmations, create? }, now)` writes/fsyncs its plan header before recording any signed identity. It uses an exclusive writer lock, hash-chained bounded JSONL, file/directory fsync and refuses missing/corrupt journals, truncation, lock stealing or an implicit reset. Unknown writes poison the writer and retain its lock for explicit recovery.
