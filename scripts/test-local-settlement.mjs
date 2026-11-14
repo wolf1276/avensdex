@@ -14,6 +14,7 @@ import { ORDER_TYPES } from '../packages/clob/admission.ts';
 import { Matcher } from '../packages/clob/engine.ts';
 import { SettlementJournal } from '../packages/clob/settlement-journal.ts';
 import { createSettlementReader, readCanonicalPosition } from '../packages/clob/settlement-reader.ts';
+import { fixtureGasLimit } from './local-fixture-gas.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 execFileSync('forge', ['build', '--root', join(root, 'contracts/evm')], { cwd: root, stdio: 'pipe', timeout: 60_000 });
@@ -29,7 +30,7 @@ const server = createServer();
 await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
 const { port } = server.address();
 await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
-const child = spawn('anvil', ['--host', '127.0.0.1', '--port', String(port), '--chain-id', '31337', '--hardfork', 'paris', '--accounts', '0', '--silent'],
+const child = spawn('anvil', ['--host', '127.0.0.1', '--port', String(port), '--chain-id', '31337', '--timestamp', '1800000100', '--hardfork', 'paris', '--accounts', '0', '--silent'],
   { stdio: 'ignore' });
 let startupError;
 child.on('error', error => { startupError = error; });
@@ -48,11 +49,13 @@ try {
   }
   assert(ready && child.exitCode === null, 'fresh local Anvil did not start');
   assert.equal(await client.getBlockNumber({ cacheTime: 0 }), 0n, 'refuse an existing funded node');
+  await client.request({ method: 'anvil_setBlockTimestampInterval', params: [0] });
   // Ephemeral generated keys and fixture gas exist only inside this new loopback test node.
   const wallets = Array.from({ length: 5 }, () => createWalletClient({ account: privateKeyToAccount(generatePrivateKey()), chain: foundry, transport }));
   const [deployer, alice, bob, pricePublisher, fundingPublisher] = wallets;
   for (const wallet of wallets) await client.request({ method: 'anvil_setBalance', params: [wallet.account.address, '0x3635c9adc5dea00000'] });
   const gas = [];
+  let expectedGasReverts = 0;
   async function receipt(hash) {
     const r = await client.waitForTransactionReceipt({ hash, pollingInterval: 10, timeout: 10_000 });
     assert.equal(r.status, 'success'); gas.push(r.gasUsed); return r;
@@ -62,7 +65,24 @@ try {
     assert(r.contractAddress); return r.contractAddress.toLowerCase();
   }
   async function write(wallet, address, a, functionName, args) {
-    return receipt(await wallet.writeContract({ address, abi: a.abi, functionName, args }));
+    const request = { account: wallet.account, address, abi: a.abi, functionName, args };
+    let estimate = await client.estimateContractGas({ ...request, blockTag: 'latest' });
+    const regression = functionName === 'closePair' && args[1] === 400_000n;
+    if (regression) {
+      // Reproduce CI: funding advances after estimation, making the mined close more expensive.
+      const block = await client.getBlock();
+      await client.request({ method: 'evm_setNextBlockTimestamp', params: [Number(block.timestamp) + 1] });
+      const before = await client.readContract({ address, abi: a.abi, functionName: 'pairs', args: [args[0]] });
+      const hash = await wallet.writeContract({ ...request, gas: estimate });
+      const reverted = await client.waitForTransactionReceipt({ hash, pollingInterval: 10, timeout: 10_000 });
+      assert.equal(reverted.status, 'reverted', 'stale estimate must reproduce the CI failure');
+      assert.deepEqual(await client.readContract({ address, abi: a.abi, functionName: 'pairs', args: [args[0]] }), before,
+        'known reverted transaction must not partially close the position');
+      gas.push(reverted.gasUsed); expectedGasReverts++;
+      // Only this deliberate, canonically observed local revert is followed by the funded-gas test.
+      estimate = await client.estimateContractGas(request);
+    }
+    return receipt(await wallet.writeContract({ ...request, gas: fixtureGasLimit(estimate) }));
   }
   const read = (address, a, functionName, args = []) => client.readContract({ address, abi: a.abi, functionName, args });
   const deploymentId = keccak256(stringToHex('avensdex-local-phase3-integration'));
@@ -137,7 +157,7 @@ try {
   assert.equal(openedPosition.longOwner, alice.account.address.toLowerCase());
   await write(alice, settlement, settlementArtifact, 'cancelOrder', [longHash, 1n]);
   await write(bob, settlement, settlementArtifact, 'cancelOrder', [shortHash, 1n]);
-  await client.request({ method: 'evm_increaseTime', params: [10] });
+  await client.request({ method: 'evm_setNextBlockTimestamp', params: [Number(await now()) + 10] });
   await client.request({ method: 'evm_mine', params: [] });
   await write(deployer, settlement, settlementArtifact, 'settleFunding', [pairId]);
   const funded = await read(vault, vaultArtifact, 'pairMargins', [pairId]);
@@ -166,7 +186,8 @@ try {
   assert.equal(await read(vault, vaultArtifact, 'totalFree6'), 0n);
   assert.equal(await read(vault, vaultArtifact, 'totalEscrow6'), 0n);
   assert.equal(await read(vault, vaultArtifact, 'totalPairMargin6'), 0n);
-  console.log(`Local Anvil Phase 3 lifecycle passed: signed partial fill, canonical receipt, restart, funding, partial/full close, owner withdrawals; ${gas.length} receipts checked. No public execution.`);
+  assert.equal(expectedGasReverts, 1);
+  console.log(`Local Anvil Phase 3 lifecycle passed: signed partial fill, canonical receipt, restart, funding, partial/full close, owner withdrawals; ${gas.length} receipts checked, including one deliberate stale-estimate gas revert. No public execution.`);
 } finally {
   journal?.close();
   child.kill('SIGTERM');

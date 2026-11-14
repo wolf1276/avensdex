@@ -19,6 +19,7 @@ import { createSettlementReader } from '../packages/clob/settlement-reader.ts';
 import { SettlementOutcomeBridge } from '../packages/clob/settlement-bridge.ts';
 import { startMarketData } from '../services/clob/market-data.ts';
 import { readFundingSnapshot, buildFundingPublication } from '../packages/clob/funding-reader.ts';
+import { fixtureGasLimit } from './local-fixture-gas.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 execFileSync('forge', ['build', '--root', join(root, 'contracts/evm')], { cwd: root, stdio: 'pipe', timeout: 60_000 });
@@ -79,7 +80,9 @@ async function deploy(a, args = []) {
   assert(r.contractAddress); return r.contractAddress.toLowerCase();
 }
 async function write(wallet, address, a, functionName, args = []) {
-  return receipt(await wallet.writeContract({ address, abi: a.abi, functionName, args }));
+  const request = { account: wallet.account, address, abi: a.abi, functionName, args };
+  const estimate = await client.estimateContractGas(request);
+  return receipt(await wallet.writeContract({ ...request, gas: fixtureGasLimit(estimate) }));
 }
 const read = (address, a, functionName, args = []) => client.readContract({ address, abi: a.abi, functionName, args });
 async function mine() {
@@ -97,6 +100,7 @@ try {
   }
   assert(ready && child.exitCode === null, 'fresh local Anvil did not start');
   assert.equal(await client.getBlockNumber({ cacheTime: 0 }), 0n, 'refuse an existing funded node');
+  await client.request({ method: 'anvil_setBlockTimestampInterval', params: [0] });
 
   const wallets = Array.from({ length: 4 }, () => createWalletClient({ account: privateKeyToAccount(generatePrivateKey()), chain: avalancheFuji, transport }));
   deployer = wallets[0];
@@ -249,7 +253,7 @@ try {
   assert.equal(mutationResponse.status, 503);
 
   // Advance 10 seconds, settle funding.
-  await client.request({ method: 'evm_increaseTime', params: [10] });
+  await client.request({ method: 'evm_setNextBlockTimestamp', params: [clock + 10] });
   await mine();
   const pairId = BigInt(intent.pairId);
   const marginsBefore = await read(vault, vaultArtifact, 'pairMargins', [pairId]);
@@ -268,7 +272,7 @@ try {
   const storedIndex = await read(oracle, fundingOracleArtifact, 'checkpointIndex18');
   const expectedTerminal = storedIndex + (capturedPrice * capturedRate * (capturedUntil - capturedAt) + capturedRemainder) / 3_600_000_000n;
   // Force expiry, then refresh only the independent source fixtures, not the funding rate.
-  await client.request({ method: 'evm_increaseTime', params: [3700] });
+  await client.request({ method: 'evm_setNextBlockTimestamp', params: [clock + 3700] });
   await mine();
   const refreshTime = await nowBlock();
   await write(deployer, indexSource, controllerArtifact, 'set', [10n ** 18n, refreshTime]);
