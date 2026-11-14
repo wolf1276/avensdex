@@ -14,9 +14,8 @@ type InjectedProvider = EIP1193Provider & {
 };
 
 export function getInjectedProvider(): InjectedProvider | null {
-  if (typeof window === "undefined") return null;
-  const provider = (window as unknown as { ethereum?: InjectedProvider }).ethereum;
-  return provider ?? null;
+  // Do not access a wallet provider while the reported MetaMask warning is under review.
+  return null;
 }
 
 export function walletAvailable(): boolean { return getInjectedProvider() !== null; }
@@ -68,14 +67,7 @@ export async function isOnExpectedNetwork(): Promise<boolean> {
 }
 
 export async function connectWallet(): Promise<string> {
-  if (typeof window === "undefined") throw new Error("Wallet requires a browser");
-  const provider = getInjectedProvider();
-  if (!provider) throw new Error("No browser wallet found. Install an EIP-1193 wallet such as Core or MetaMask to continue.");
-  const accounts = (await provider.request({ method: "eth_requestAccounts" })) as string[];
-  const account = accounts?.[0];
-  if (!account) throw new Error("Approve the connection request in your wallet");
-  await ensureFujiChain();
-  return getAddress(account);
+  throw new Error("Wallet connection is disabled while the reported MetaMask security warning is investigated. Do not bypass the warning.");
 }
 
 export async function disconnectWallet(): Promise<void> { /* Account access is revoked inside the wallet; there is nothing to revoke here. */ }
