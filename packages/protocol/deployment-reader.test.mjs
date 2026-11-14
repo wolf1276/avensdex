@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TransactionNotFoundError, TransactionReceiptNotFoundError } from 'viem';
 import { createDeploymentReader } from './deployment-reader.ts';
+import { parseDeploymentReaderArgs, runDeploymentReaderCommand } from './deployment-reader-cli.ts';
 
 const hex = c => `0x${c.repeat(64)}`;
 const addr = c => `0x${c.repeat(40)}`;
@@ -263,4 +264,35 @@ test('every reader method re-verifies both Fuji chain IDs', async () => {
     b.state.chainId = 43114;
     await assert.rejects(call(), /CHAIN_MISMATCH/);
   }
+});
+
+test('CLI parses only read-only commands with exact operands', () => {
+  assert.deepEqual(parseDeploymentReaderArgs(['head']), { method: 'getCanonicalHead' });
+  assert.deepEqual(parseDeploymentReaderArgs(['block', '100']), { method: 'getCanonicalBlockHash', block: '100' });
+  assert.deepEqual(parseDeploymentReaderArgs(['transaction', TX_HASH]), { method: 'getTransaction', hash: TX_HASH });
+  assert.deepEqual(parseDeploymentReaderArgs(['receipt', TX_HASH]), { method: 'getReceipt', hash: TX_HASH });
+  assert.deepEqual(parseDeploymentReaderArgs(['code', TO, '100']), { method: 'getCode', address: TO, block: '100' });
+  for (const args of [[], ['send'], ['head', 'extra'], ['block'], ['transaction', TX_HASH, 'extra'], ['code', TO]]) {
+    assert.throws(() => parseDeploymentReaderArgs(args), /INVALID_DEPLOYMENT_READER_ARGS/);
+  }
+});
+
+test('CLI routes commands to the reader without adding write authority', async () => {
+  const calls = [];
+  const fake = {
+    async getTransaction(hash) { calls.push(['getTransaction', hash]); return { hash }; },
+    async getReceipt(hash) { calls.push(['getReceipt', hash]); return { hash }; },
+    async getCanonicalHead() { calls.push(['getCanonicalHead']); return { number: '101' }; },
+    async getCanonicalBlockHash(block) { calls.push(['getCanonicalBlockHash', block]); return BLOCK_100; },
+    async getCode(address, block) { calls.push(['getCode', address, block]); return '0x60016001'; },
+  };
+  assert.deepEqual(await runDeploymentReaderCommand(fake, parseDeploymentReaderArgs(['head'])), { number: '101' });
+  assert.equal(await runDeploymentReaderCommand(fake, parseDeploymentReaderArgs(['block', '100'])), BLOCK_100);
+  assert.deepEqual(await runDeploymentReaderCommand(fake, parseDeploymentReaderArgs(['transaction', TX_HASH])), { hash: TX_HASH });
+  assert.deepEqual(await runDeploymentReaderCommand(fake, parseDeploymentReaderArgs(['receipt', TX_HASH])), { hash: TX_HASH });
+  assert.equal(await runDeploymentReaderCommand(fake, parseDeploymentReaderArgs(['code', TO, '100'])), '0x60016001');
+  assert.deepEqual(calls, [
+    ['getCanonicalHead'], ['getCanonicalBlockHash', '100'], ['getTransaction', TX_HASH],
+    ['getReceipt', TX_HASH], ['getCode', TO, '100'],
+  ]);
 });

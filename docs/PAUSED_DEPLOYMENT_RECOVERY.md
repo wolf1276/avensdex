@@ -21,7 +21,11 @@ All native values are zero. Gas limits multiplied by maximum fees must fit the s
 
 `recordSigned(serializedTransaction)` recovers the actual EIP-1559 sender and verifies chain, nonce, target, zero value, calldata hash, gas and fees against the next planned transaction before persisting its hash. It does not produce a signature or broadcast. `reconcile(sequence)` requires the actual transaction plus canonical receipt/confirmations, sender/nonce/input identity and expected created runtime. Receipt gas cannot exceed signed gas. A reverted creation's real null contract address is preserved, not invented. Reorgs/missing evidence/unexpected runtime stop progression.
 
-Restart downgrades persisted progress to unknown and requires serial fresh reconciliation. Reconciliation may continue after plan expiry. Nothing here permits automatic retries/replacements, releases an unknown nonce or destroys the old journal. There is no public-reader adapter wired to an operator signer yet.
+Restart downgrades persisted progress to unknown and requires serial fresh reconciliation. Reconciliation may continue after plan expiry. Nothing here permits automatic retries/replacements, releases an unknown nonce or destroys the old journal.
+
+## Read-only reader CLI
+
+`npm run deployment:read -- <command>` uses the fixed Fuji endpoints and the two-provider reader to print `head`, `block <number>`, `transaction <hash>`, `receipt <hash>` or `code <address> <block>` as JSON. Both providers must agree on the requested observation; malformed or one-sided results fail closed. Head reads enforce freshness, and code reads check the pinned block for reorgs. Receipt inspection alone does not establish canonicality or confirmation depth; those checks remain the journal's responsibility. The CLI has no signer, retry, broadcast or journal-write path, and it is not wired to `DeploymentJournal` reconciliation or an operator signing workflow.
 
 ## Operator obligations before any real key use
 

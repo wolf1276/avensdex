@@ -54,7 +54,7 @@ Development status is tracked in [Roadmap](docs/ROADMAP.md), [Phase 3 status](do
 - Contract execution for market, reduce-only, post-only, IOC or strategy orders. The offchain matcher supports some of these semantics, but the supported contract settlement rejects them.
 - Adaptive funding controller, existing-terminal wallet/browser integration, live Guardian/Autopilot and genuine spot/hedge routes.
 - Public feed/asset/venue qualification, a finality/reorg operating policy and independent security review.
-- An integrated public operator signing and policy-confirmed reader pipeline. A read-only two-provider deployment reader exists, but it is not wired to an operator signer or CLI; the trusted-publisher adapter remains local-only.
+- An integrated public operator signing and policy-confirmed reader pipeline. A read-only two-provider deployment reader and fixed-endpoint inspection CLI exist, but they are not wired to an operator signer, the deployment journal or any submission path; the trusted-publisher adapter remains local-only.
 - Hosted production service, public authentication, rate limiting or abuse controls.
 
 The active product is Fuji-only with no PAPER mode or simulated-execution fallback. Local unit, fuzz, benchmark and fork fixtures are tests, not public trades or liquidity.
@@ -136,6 +136,16 @@ The optional historical fork check uses read-only RPC methods plus locally imper
 node --experimental-strip-types scripts/qualify-fuji-fork.mjs
 ```
 
+The read-only deployment reader CLI prints two-provider observations from the fixed Fuji endpoints. It has no signer or write method:
+
+```sh
+npm run deployment:read -- head
+npm run deployment:read -- block <decimal-block-number>
+npm run deployment:read -- transaction <tx-hash>
+npm run deployment:read -- receipt <tx-hash>
+npm run deployment:read -- code <address> <decimal-block-number>
+```
+
 ### Read-only market-data service
 
 Use a journal directory outside the repository. The service binds to `127.0.0.1`, reports `503` for readiness and all mutations, and has no signer.
@@ -159,7 +169,7 @@ Local verification checkpoint: committed revision `643aa16`. Clean tracked-sourc
 
 Additional checks against the same contract source covered `27` local historical Fuji-fork receipts at block `61048431`. Root `npm audit --omit=dev` reported `0` vulnerabilities at that checkpoint; this is a point-in-time dependency check, not a security audit.
 
-The current tree adds `15` protocol tests for the read-only two-provider deployment reader; `npm run typecheck` and `npm run test:protocol` (`42` tests) pass locally. These are unit fixtures with mocked RPC providers, not public Fuji reads.
+The current tree adds `17` protocol tests for the read-only two-provider deployment reader and its fixed-endpoint inspection CLI; `npm run typecheck` and `npm run test:protocol` (`44` tests) pass locally. These are unit fixtures with mocked RPC providers, not public Fuji reads.
 
 These are local or pinned historical-fork results. They are not public Fuji transactions, public finality, liquidity, asset qualification or a hosted service. Counts are revision- and environment-scoped and will change as the repository changes. No public addresses, receipt links, deployments or fills are claimed.
 
