@@ -44,6 +44,8 @@ Its actual local lifecycle checks:
 
 Latest local checks for this unit passed: 14 funding, 65 protocol and 118 CLOB TypeScript tests; 30 Python tests; 133 Foundry tests including configured 1,000-case funding fuzzing; 4 locked Rust tests; 24 original local lifecycle receipts and 26 additional phase-4 receipts on **separate fresh local nodes**. Formatting and diff checks passed. Root `npm audit --omit=dev` reported zero vulnerabilities, a point-in-time dependency result, not a security audit. Per-run gas/cost totals are printed from actual local receipts and vary with generated signatures; they are not public Fuji cost or profitability evidence.
 
+A clean tracked-source archive of revision `6bc90cc` additionally passed `npm ci --ignore-scripts`, the full `npm test` suite, locked Rust reference tests and Foundry formatting without reusing repository `node_modules` or generated artifacts. Hosted CI and browser tests were not run for this checkpoint; no historical-fork or public-Fuji result is implied.
+
 OpenCode drafted isolated files in a separate worktree. Parent review removed unsafe/overbroad APIs, strengthened freshness/epoch validation, added paired-ledger and restart checks, and replaced tautological/mis-parenthesized EVM assertions with real state/receipt checks. No unreviewed worktree merge or funded-state reset was used.
 
 ## Explicit remaining gates
