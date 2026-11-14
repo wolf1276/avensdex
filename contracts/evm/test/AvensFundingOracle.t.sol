@@ -221,6 +221,109 @@ contract AvensFundingOracleTest {
         require(oracle.fundingRemainder() == other.fundingRemainder(), "split remainder");
     }
 
+    function testRefreshKeepsEpochRateAndEmaWithoutReplayingObservations() public {
+        vm.warp(3600);
+        _observe(PRICE, 100.12e18);
+        _publish();
+        int256 rate = oracle.fundingRatePpm();
+        int256 smoothed = oracle.premiumEma();
+        vm.warp(3640);
+        _observe(PRICE, 100.13e18);
+        vm.prank(PUBLISHER);
+        oracle.refreshObservations(1, 1);
+        require(oracle.rateValidUntil() == 3700, "freshness not renewed");
+        require(oracle.rateAppliedAt() == 3600 && oracle.lastEpoch() == 1, "rate horizon extended");
+        require(oracle.fundingRatePpm() == rate && oracle.premiumEma() == smoothed, "epoch math repeated");
+        vm.prank(PUBLISHER);
+        vm.expectRevert(AvensFundingOracle.InvalidObservation.selector);
+        oracle.refreshObservations(1, 1);
+        vm.prank(PUBLISHER);
+        vm.expectRevert(AvensFundingOracle.InvalidEpoch.selector);
+        oracle.publish(1, 1);
+    }
+
+    function testRefreshAfterExpiryDoesNotBackfillGap() public {
+        vm.warp(3600);
+        _observe(PRICE, 100.12e18);
+        _publish();
+        vm.warp(3660);
+        oracle.checkpoint();
+        int128 terminal = oracle.checkpointIndex18();
+        vm.warp(3800);
+        _observe(PRICE + 17, 100.12e18);
+        vm.prank(PUBLISHER);
+        oracle.refreshObservations(1, 1);
+        require(oracle.observedIndexPrice18() == PRICE + 17, "refreshed price missing");
+        require(oracle.checkpointIndex18() == terminal && oracle.fundingUpdatedAt() == 3800, "gap backfilled");
+        vm.warp(3810);
+        oracle.checkpoint();
+        int256 numerator = int256(uint256(PRICE) * 60 + uint256(PRICE + 17) * 10) * oracle.fundingRatePpm();
+        require(oracle.checkpointIndex18() == numerator / 3_600_000_000, "fresh-window accrual");
+        require(oracle.fundingRemainder() == numerator % 3_600_000_000, "refresh lost remainder");
+    }
+
+    function testRefreshAuthorityRevisionEpochAndConfigurationGuards() public {
+        vm.expectRevert(AvensFundingOracle.Unauthorized.selector);
+        oracle.refreshObservations(1, 0);
+        vm.prank(PUBLISHER);
+        vm.expectRevert(AvensFundingOracle.InvalidEpoch.selector);
+        oracle.refreshObservations(1, 0);
+        vm.warp(3600);
+        _observe(PRICE, 100.12e18);
+        _publish();
+        vm.prank(PUBLISHER);
+        vm.expectRevert(AvensFundingOracle.InvalidConfiguration.selector);
+        oracle.refreshObservations(2, 1);
+        vm.prank(PUBLISHER);
+        vm.expectRevert(AvensFundingOracle.InvalidEpoch.selector);
+        oracle.refreshObservations(1, 0);
+        vm.warp(3601);
+        _observe(PRICE, 100.12e18);
+        oracle.configure(FundingMath.Mode.ADAPTIVE, FundingMath.defaults(), 1);
+        vm.prank(PUBLISHER);
+        vm.expectRevert(AvensFundingOracle.InvalidEpoch.selector);
+        oracle.refreshObservations(2, 1);
+        vm.warp(7200);
+        _observe(PRICE, 100.12e18);
+        vm.prank(PUBLISHER);
+        vm.expectRevert(AvensFundingOracle.InvalidEpoch.selector);
+        oracle.refreshObservations(2, 1);
+    }
+
+    function testRefreshRejectsUnadvancedFutureOutlierAndChangedSourcesAtomically() public {
+        vm.warp(3600);
+        _observe(PRICE, 100.12e18);
+        _publish();
+        vm.warp(3640);
+        index.set(PRICE, 3640);
+        vm.prank(PUBLISHER);
+        vm.expectRevert(AvensFundingOracle.InvalidObservation.selector);
+        oracle.refreshObservations(1, 1);
+        index.set(PRICE, 3600);
+        mark.set(100.12e18, 3640);
+        vm.prank(PUBLISHER);
+        vm.expectRevert(AvensFundingOracle.InvalidObservation.selector);
+        oracle.refreshObservations(1, 1);
+        _observe(PRICE, 200e18);
+        vm.prank(PUBLISHER);
+        vm.expectRevert(FundingMath.SignalOutsideBounds.selector);
+        oracle.refreshObservations(1, 1);
+        _observe(PRICE, 100.12e18);
+        mark.set(100.12e18, 3641);
+        vm.prank(PUBLISHER);
+        vm.expectRevert(AvensFundingOracle.InvalidObservation.selector);
+        oracle.refreshObservations(1, 1);
+        vm.etch(address(mark), hex"00");
+        vm.prank(PUBLISHER);
+        vm.expectRevert(AvensFundingOracle.SourceCodeChanged.selector);
+        oracle.refreshObservations(1, 1);
+        require(oracle.fundingUpdatedAt() == 3600 && oracle.rateValidUntil() == 3660, "failed refresh mutated accrual");
+        require(
+            oracle.observedIndexTimestamp() == 3600 && oracle.observedMarkTimestamp() == 3600,
+            "failed refresh mutated source time"
+        );
+    }
+
     function testCallerCannotSupplyAccountingTime() public {
         (bool ok,) = address(oracle).call(abi.encodeWithSignature("accrue(uint256)", uint256(1e12)));
         require(!ok, "arbitrary timestamp accepted");

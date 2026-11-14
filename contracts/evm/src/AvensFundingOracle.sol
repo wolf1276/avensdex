@@ -42,9 +42,12 @@ contract AvensFundingOracle is IOracleAdapter {
     uint64 public rateAppliedAt;
     uint64 public rateValidUntil;
     uint128 public observedIndexPrice18;
+    uint64 public observedIndexTimestamp;
+    uint64 public observedMarkTimestamp;
 
     event FundingEpochPublished(uint256 indexed epoch, uint256 indexed revision, int256 ratePpm, uint64 validUntil);
     event FundingConfigured(FundingMath.Mode mode, uint256 revision);
+    event FundingObservationsRefreshed(uint256 indexed epoch, uint256 indexed revision, uint64 validUntil);
 
     constructor(IOracleAdapter indexSource_, IOracleAdapter markSource_, uint32 marketId_, address publisher_) {
         if (
@@ -66,6 +69,7 @@ contract AvensFundingOracle is IOracleAdapter {
         params = FundingMath.defaults();
         T.Price memory initial = price(marketId_);
         observedIndexPrice18 = initial.price18;
+        observedIndexTimestamp = initial.sourceTimestamp;
         fundingUpdatedAt = uint64(block.timestamp);
         rateAppliedAt = uint64(block.timestamp);
         rateValidUntil = uint64(block.timestamp); // No usable rate before an authenticated publication.
@@ -108,6 +112,8 @@ contract AvensFundingOracle is IOracleAdapter {
         int256 next = FundingMath.nextRate(mode, smoothed, fundingRatePpm, params);
         _checkpoint();
         observedIndexPrice18 = index.price18;
+        observedIndexTimestamp = index.sourceTimestamp;
+        observedMarkTimestamp = mark.sourceTimestamp;
         premiumEma = smoothed;
         hasPremiumEma = true;
         fundingRatePpm = next;
@@ -118,6 +124,35 @@ contract AvensFundingOracle is IOracleAdapter {
         hasLastEpoch = true;
         lastEpoch = epoch;
         emit FundingEpochPublished(epoch, revision, next, rateValidUntil);
+    }
+
+    /// @notice Renew observations, not the epoch's computed rate. Expired gaps never accrue.
+    function refreshObservations(uint256 expectedRevision, uint256 expectedEpoch) external {
+        _available();
+        if (msg.sender != fundingPublisher) revert Unauthorized();
+        if (expectedRevision != revision) revert InvalidConfiguration();
+        if (
+            !hasLastEpoch || !hasPremiumEma || expectedEpoch != lastEpoch || expectedEpoch != block.timestamp / INTERVAL
+                || block.timestamp >= uint256(rateAppliedAt) + INTERVAL
+        ) revert InvalidEpoch();
+        T.Price memory index = price(marketId);
+        if (address(markSource).codehash != markSourceCodeHash) revert SourceCodeChanged();
+        T.Price memory mark = markSource.price(marketId);
+        _validate(mark, uint256(params.mark_max_age_sec));
+        if (index.sourceTimestamp <= observedIndexTimestamp || mark.sourceTimestamp <= observedMarkTimestamp) {
+            revert InvalidObservation();
+        }
+        FundingMath.premium(
+            index.price18, mark.price18, index.sourceTimestamp, mark.sourceTimestamp, block.timestamp, params
+        );
+        _checkpoint();
+        observedIndexPrice18 = index.price18;
+        observedIndexTimestamp = index.sourceTimestamp;
+        observedMarkTimestamp = mark.sourceTimestamp;
+        uint256 sourceExpiry = uint256(index.sourceTimestamp) + uint256(params.oracle_max_age_sec);
+        uint256 publicationExpiry = uint256(rateAppliedAt) + INTERVAL;
+        rateValidUntil = uint64(sourceExpiry < publicationExpiry ? sourceExpiry : publicationExpiry);
+        emit FundingObservationsRefreshed(lastEpoch, revision, rateValidUntil);
     }
 
     function configure(FundingMath.Mode mode_, FundingMath.Params calldata params_, uint256 expectedRevision) external {
@@ -131,6 +166,8 @@ contract AvensFundingOracle is IOracleAdapter {
         // Validate under the new freshness policy; any failure rolls back the whole checkpoint/configuration.
         T.Price memory index = price(marketId);
         observedIndexPrice18 = index.price18;
+        observedIndexTimestamp = index.sourceTimestamp;
+        observedMarkTimestamp = 0;
         fundingRatePpm = 0;
         premiumEma = 0;
         hasPremiumEma = false;

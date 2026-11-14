@@ -37,6 +37,7 @@ export interface ControllerState {
   fundingUpdatedAt: bigint;
   indexPrice: bigint;
   indexTimestamp: bigint;
+  markTimestamp: bigint;
 }
 
 export interface PublishResult {
@@ -73,9 +74,11 @@ function accrue(state: ControllerState, now: bigint): ControllerState {
   const numerator = state.indexPrice * state.fundingRatePpm * elapsed + state.fundingRemainder;
   const denominator = SCALE * INTERVAL;
   const delta = numerator / denominator;
+  const fundingIndex = state.fundingIndex + delta;
+  if (fundingIndex < -(1n << 127n) || fundingIndex >= (1n << 127n)) throw new FundingControllerError('funding index overflow');
   return {
     ...state,
-    fundingIndex: state.fundingIndex + delta,
+    fundingIndex,
     fundingRemainder: numerator % denominator,
     fundingUpdatedAt: now,
   };
@@ -107,11 +110,15 @@ export function initialState(
     fundingUpdatedAt: now,
     indexPrice,
     indexTimestamp,
+    markTimestamp: 0n,
   };
 }
 
 export function fundingValidUntil(state: ControllerState): bigint {
-  return state.rateAppliedAt + INTERVAL;
+  if (state.fallback) return state.rateAppliedAt;
+  const sourceExpiry = state.indexTimestamp + state.params.oracle_max_age_sec;
+  const publicationExpiry = state.rateAppliedAt + INTERVAL;
+  return sourceExpiry < publicationExpiry ? sourceExpiry : publicationExpiry;
 }
 
 export function isExpired(state: ControllerState, now: bigint): boolean {
@@ -173,9 +180,22 @@ export function publishEpoch(state: ControllerState, observation: Observation): 
     rateAppliedAt: now,
     lastEpoch: epoch,
     fundingUpdatedAt: now,
+    markTimestamp: observation.markTimestamp,
   };
 
   return { state: next, epoch, ratePpm: rate, premiumSample, smoothedPremium, fallback };
+}
+
+export function refreshObservations(state: ControllerState, observation: Observation, expectedRevision: number): ControllerState {
+  validateParams(state.params);
+  if (expectedRevision !== state.revision) throw new FundingControllerError('configuration revision mismatch');
+  if (state.lastEpoch === null || state.premiumEma === null || state.fallback || epochOf(observation.now) !== state.lastEpoch
+    || observation.now >= state.rateAppliedAt + INTERVAL) throw new FundingControllerError('no refreshable funding epoch');
+  if (!positivePrice(observation.indexPrice) || !positivePrice(observation.markPrice)
+    || observation.indexTimestamp <= state.indexTimestamp || observation.markTimestamp <= state.markTimestamp
+    || observation.indexTimestamp > observation.now || observation.markTimestamp > observation.now) throw new FundingControllerError('invalid refresh observation');
+  premium(observation.indexPrice, observation.markPrice, observation.indexTimestamp, observation.markTimestamp, observation.now, state.params);
+  return { ...accrue(state, observation.now), indexPrice: observation.indexPrice, indexTimestamp: observation.indexTimestamp, markTimestamp: observation.markTimestamp };
 }
 
 export function configureController(
@@ -214,6 +234,7 @@ export function configureController(
     fundingUpdatedAt: now,
     indexPrice: ip,
     indexTimestamp: it,
+    markTimestamp: 0n,
   };
 }
 

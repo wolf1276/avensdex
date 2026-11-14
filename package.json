@@ -27,6 +27,7 @@
     "test:contracts": "forge test --root contracts/evm",
     "test:settlement:evm": "node --experimental-strip-types scripts/test-local-settlement.mjs",
     "test:phase4:evm": "node --experimental-strip-types scripts/test-phase4-backend.mjs",
+    "demo:adaptive": "node --experimental-strip-types scripts/test-phase4-backend.mjs --demo",
     "test": "npm run build && npm run typecheck && npm run test:funding && npm run test:protocol && npm run test:clob && npm run test:appwrite && npm run test:network && npm run test:contracts && npm run test:settlement:evm && npm run test:phase4:evm",
     "deployment:artifacts": "node --experimental-strip-types packages/protocol/foundry-artifacts-cli.ts"
   },

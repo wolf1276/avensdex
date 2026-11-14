@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { defaults, SCALE, nextRate, premium, ema } from './preview.ts';
-import { initialState, publishEpoch, configureController, accrueIndex, fundingValidUntil, isExpired, INTERVAL } from './controller.ts';
+import { initialState, publishEpoch, configureController, accrueIndex, fundingValidUntil, isExpired, INTERVAL, refreshObservations } from './controller.ts';
 
 const PRICE = 100n * 10n ** 18n;
 const observation = (now = 3600n, sign = 1n) => ({ indexPrice: PRICE, indexTimestamp: now,
@@ -39,6 +39,39 @@ for (const sign of [1n, -1n]) {
   });
 }
 
+for (const sign of [1n, -1n]) {
+  test(`observation refresh preserves epoch math and excludes stale gaps for sign ${sign}`, () => {
+    const state = publishEpoch(initial(), observation(3600n, sign)).state;
+    const terminal = accrueIndex(state, 3660n);
+    const refreshed = refreshObservations(state, { ...observation(3800n, sign), indexPrice: PRICE + 17n }, 1);
+    assert.equal(refreshed.fundingIndex, terminal.fundingIndex);
+    assert.equal(refreshed.fundingRemainder, terminal.fundingRemainder);
+    assert.equal(refreshed.rateAppliedAt, state.rateAppliedAt);
+    assert.equal(refreshed.lastEpoch, state.lastEpoch);
+    assert.equal(refreshed.fundingRatePpm, state.fundingRatePpm);
+    assert.equal(refreshed.premiumEma, state.premiumEma);
+    const accrued = accrueIndex(refreshed, 3810n);
+    assert.equal(refreshed.fundingUpdatedAt, 3800n);
+    assert.equal(fundingValidUntil(refreshed), 3860n);
+    assert.equal(isExpired(refreshed, 3859n), false);
+    assert.equal(isExpired(refreshed, 3860n), true);
+    const numerator = state.fundingRatePpm * (PRICE * 60n + (PRICE + 17n) * 10n);
+    assert.equal(accrued.fundingIndex, numerator / (SCALE * INTERVAL));
+    assert.equal(accrued.fundingRemainder, numerator % (SCALE * INTERVAL));
+    assert.throws(() => refreshObservations(refreshed, observation(3800n, sign), 1));
+    assert.throws(() => refreshObservations(refreshed, observation(3810n, sign), 2));
+    assert.throws(() => refreshObservations(refreshed, observation(7200n, sign), 1));
+  });
+}
+
+test('reference accrual rejects either int128 overflow like the contract', () => {
+  for (const sign of [1n, -1n]) {
+    const state = publishEpoch(initial(), observation(3600n, sign)).state;
+    state.fundingIndex = sign > 0n ? (1n << 127n) - 1n : -(1n << 127n);
+    assert.throws(() => accrueIndex(state, 3601n), /overflow/);
+  }
+});
+
 test('stale index, stale mark and excessive premium disable the rate', () => {
   for (const change of [{ indexTimestamp: 3500n }, { markTimestamp: 3200n }, { markPrice: PRICE * 2n }]) {
     const result = publishEpoch(initial(), { ...observation(), ...change });
@@ -65,9 +98,9 @@ test('all transitions reject time reversal, including before first publication',
 
 test('oracle freshness and rate expiry bound accrual without stale-gap backfill', () => {
   const state = publishEpoch(initial(), observation()).state;
-  assert.equal(fundingValidUntil(state), 7200n);
-  assert.equal(isExpired(state, 7199n), false);
-  assert.equal(isExpired(state, 7200n), true);
+  assert.equal(fundingValidUntil(state), 3660n);
+  assert.equal(isExpired(state, 3659n), false);
+  assert.equal(isExpired(state, 3660n), true);
   const bounded = accrueIndex(state, 3660n);
   const late = accrueIndex(state, 10000n);
   assert.equal(late.fundingIndex, bounded.fundingIndex);

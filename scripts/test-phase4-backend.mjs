@@ -22,6 +22,10 @@ import { createAdmissionGate } from '../services/clob/admission-gate.ts';
 import { readFundingSnapshot, buildFundingPublication } from '../packages/clob/funding-reader.ts';
 import { fixtureGasLimit } from './local-fixture-gas.mjs';
 
+const options = process.argv.slice(2);
+assert(options.length === 0 || (options[0] === '--demo' && options.length <= 2 && (options.length === 1 || /^--hold=\d{1,4}$/.test(options[1]))), 'only --demo [--hold=seconds] is supported');
+const demoHold = options.length ? Number(options[1]?.slice(7) ?? 600) : 0;
+assert(Number.isSafeInteger(demoHold) && demoHold >= 0 && demoHold <= 1800, 'local demo hold is bounded to 30 minutes');
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 execFileSync('forge', ['build', '--root', join(root, 'contracts/evm')], { cwd: root, stdio: 'pipe', timeout: 60_000 });
 function artifact(file, name) {
@@ -285,6 +289,38 @@ try {
   assert(marginsAfter.longMargin6 < marginsBefore.longMargin6, 'positive funding charges long');
   assert(marginsAfter.shortMargin6 > marginsBefore.shortMargin6, 'positive funding credits short');
   assert.equal(marginsAfter.longMargin6 + marginsAfter.shortMargin6, marginsBefore.longMargin6 + marginsBefore.shortMargin6);
+
+  // Authenticated fresh observations renew liveness without changing the epoch rate or backfilling a gap.
+  await client.request({ method: 'evm_setNextBlockTimestamp', params: [clock + 70] });
+  await mine();
+  const renewedAt = await nowBlock();
+  await write(deployer, indexSource, controllerArtifact, 'set', [10n ** 18n + 17n, renewedAt]);
+  await write(deployer, markSource, controllerArtifact, 'set', [10012n * 10n ** 14n, renewedAt]);
+  const [gapTerminal, expiredAt] = await read(oracle, fundingOracleArtifact, 'fundingIndex', [1]);
+  assert(expiredAt <= BigInt(clock));
+  const epochRate = await read(oracle, fundingOracleArtifact, 'fundingRatePpm');
+  const epochEma = await read(oracle, fundingOracleArtifact, 'premiumEma');
+  const originalAppliedAt = await read(oracle, fundingOracleArtifact, 'rateAppliedAt');
+  const revision = await read(oracle, fundingOracleArtifact, 'revision');
+  await write(fundingPublisher, oracle, fundingOracleArtifact, 'refreshObservations', [revision, BigInt(clock) / 3600n]);
+  assert.equal(await read(oracle, fundingOracleArtifact, 'checkpointIndex18'), gapTerminal);
+  assert.equal(await read(oracle, fundingOracleArtifact, 'fundingRatePpm'), epochRate);
+  assert.equal(await read(oracle, fundingOracleArtifact, 'premiumEma'), epochEma);
+  assert.equal(await read(oracle, fundingOracleArtifact, 'rateAppliedAt'), originalAppliedAt);
+  await client.request({ method: 'evm_setNextBlockTimestamp', params: [clock + 10] }); await mine();
+  const beforeRefreshPayment = await read(vault, vaultArtifact, 'pairMargins', [pairId]);
+  await write(deployer, settlement, settlementArtifact, 'settleFunding', [pairId]);
+  const afterRefreshPayment = await read(vault, vaultArtifact, 'pairMargins', [pairId]);
+  assert(afterRefreshPayment.longMargin6 < beforeRefreshPayment.longMargin6);
+  assert.equal(afterRefreshPayment.longMargin6 + afterRefreshPayment.shortMargin6, beforeRefreshPayment.longMargin6 + beforeRefreshPayment.shortMargin6);
+  await service.refreshFunding(primary, secondary, { chainId: 43113, marketId: 1, deploymentId, settlementContract: settlement, oracleContract: oracle, oracleCodeHash, confirmations: 1 });
+  if (demoHold) {
+    console.log(JSON.stringify({ environment: 'LOCAL_ANVIL_FIXTURE_NOT_PUBLIC_FUJI', mode: 'ADAPTIVE', controlledVmTime: clock,
+      warning: 'Generated test assets and controlled source observations; VM time is frozen during the viewing window. Not public liquidity, APR or profit.',
+      rpc: `http://127.0.0.1:${port}`, snapshot: `http://127.0.0.1:${service.port}/snapshot`, funding: `http://127.0.0.1:${service.port}/funding`,
+      contracts: { vault, oracle, settlement }, ratePpm: epochRate.toString(), longMargin6: afterRefreshPayment.longMargin6.toString(), shortMargin6: afterRefreshPayment.shortMargin6.toString(), viewingSeconds: demoHold }, null, 2));
+    await delay(demoHold * 1000);
+  }
 
   // Derive the terminal index independently from the stored rate/price/checkpoint before advancing time.
   const capturedPrice = await read(oracle, fundingOracleArtifact, 'observedIndexPrice18');
