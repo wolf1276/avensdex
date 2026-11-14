@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { GeistPixelLine } from 'geist/font/pixel';
 import {
-  Hero, Manifesto, PartnerStrip, Pillars, PlatformSection,
+  Hero, Manifesto, Pillars, PlatformSection,
   SiteFooter, SiteHeader, SmoothScroll, StatsGrid, UseCases,
 } from '@/features/landing';
 
@@ -17,7 +17,6 @@ export default function Home() {
       <main className="agent-landing">
         <SiteHeader />
         <Hero />
-        <PartnerStrip />
         <PlatformSection />
         <StatsGrid />
         <Pillars />
