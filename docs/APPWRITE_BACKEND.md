@@ -32,10 +32,10 @@ The Function is deployed at **https://avensdex-api.sgp.appwrite.run** in the exi
 
 A guest Appwrite Realtime subscription from the configured Vercel origin completed its `connected` handshake. Delivery/recovery of genuine trading events is not established by that handshake. Vercel uses the server-only `CLOB_BACKEND_URL` for bounded, validated read-through of the actual order book; prices/sizes are converted from integer protocol units. Provisional matches are not relabeled as confirmed trades.
 
-This Function is separate from the previously created Appwrite **Site**. Do not use a successful Site build as backend execution evidence. Automatic settlement is still unavailable and the deployed contracts remain paused. Wallet connection remains disabled pending investigation of the reported warning.
+This Function is separate from the previously created Appwrite **Site**. Do not use a successful Site build as backend execution evidence. Automatic settlement is still unavailable and the deployed contracts remain paused. Read-only account connection is supported; signing and transactions remain disabled pending investigation of the reported warning. Do not bypass a provider warning.
 
 ## Checks and limits
 
 `npm run test:appwrite` covers cold starts, real EIP-712 verification, concurrent writers, lost acknowledgments, integrity/identity refusal, REST pagination and endpoint/write bounds using isolated fixtures. `npm run test:phase4:evm` separately tests real local EVM escrow and HTTP admission through close/withdraw; neither establishes public Fuji fills.
 
-Appwrite deployment, frontend connection, on-chain activation and a funded public lifecycle are separate gates. Keep wallets disabled while the reported MetaMask warning remains unresolved. Never disable that warning or treat a new domain as a security fix.
+Appwrite deployment, frontend connection, on-chain activation and a funded public lifecycle are separate gates. Keep wallet signing/transactions disabled while the reported MetaMask warning remains unresolved. Never disable that warning or treat a new domain as a security fix.

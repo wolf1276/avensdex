@@ -65,12 +65,12 @@ export function WalletConnect() {
         setAddress(next ?? null);
         setConnected(!!next);
         setWrongNetwork(false);
-        void queryClient.invalidateQueries();
+        queryClient.clear();
       },
       onChainChanged: (chainId) => {
         if (cancelled) return;
         setWrongNetwork(String(chainId).toLowerCase() !== FUJI_CHAIN_HEX);
-        void queryClient.invalidateQueries();
+        queryClient.clear();
       },
     });
     return () => {
@@ -90,9 +90,9 @@ export function WalletConnect() {
       setConnected(true);
       const ok = await isOnExpectedNetwork();
       setWrongNetwork(!ok);
-      void queryClient.invalidateQueries();
+      queryClient.clear();
       if (!ok) toast.warning(`Switch your wallet to ${NETWORK_LABEL} (${FUJI_CHAIN_ID}).`);
-      else toast.success("Wallet connected");
+      else toast.success("Wallet connected · read-only");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
@@ -111,7 +111,7 @@ export function WalletConnect() {
           <DialogHeader>
             <DialogTitle>Connect a wallet</DialogTitle>
             <DialogDescription>
-              Use the injected browser wallet for Avalanche Fuji. EVM transactions are signed locally in your wallet.
+              Connect your browser wallet to view your account on Fuji. Approvals, transactions and signing remain disabled.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2">
@@ -122,11 +122,11 @@ export function WalletConnect() {
             </Button>
             {!hasInjected && (
               <p role="status" className="text-sm text-muted-foreground">
-                Wallet access is temporarily paused during security review.
+                No browser wallet detected. Install Core or MetaMask to use read-only account access.
               </p>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">Connecting does not submit a trading order.</p>
+          <p className="text-xs text-muted-foreground">No signing or approval is requested. If your wallet shows a security warning, stop—do not bypass it.</p>
         </DialogContent>
       </Dialog>
     );
@@ -136,7 +136,7 @@ export function WalletConnect() {
     try {
       await disconnectWallet();
       disconnect();
-      void queryClient.invalidateQueries();
+      queryClient.clear();
       toast.success("Wallet disconnected");
     } catch (error) { toast.error(String(error)); }
   }

@@ -17,7 +17,7 @@ Vault, feed oracle and settlement are **deployed on Fuji but paused**, with **no
 | Contract execution support | Manual vanilla limit orders only |
 | Trading service | Canonically escrow-gated signed HTTP ingress implemented/tested; public host and settlement transport pending, `/ready` remains `503` |
 | Config | `executionEnabled:false`, `mainnetEnabled:false` |
-| UI | Existing landing/terminal published under `apps/web`; read-only Fuji release, wallet connection blocked pending security-warning review |
+| UI | Existing landing/terminal published under `apps/web`; read-only Fuji account connection; signing/trading disabled pending security-warning and transaction-recovery review |
 | Audit | No independent audit; point-in-time `npm audit` only |
 
 Development status is tracked in [Roadmap](docs/ROADMAP.md), [Phase 3 status](docs/PHASE3_STATUS.md), [Phase 4 backend status](docs/PHASE4_STATUS.md) and [live-trading blockers](docs/LIVE_TRADING_BLOCKERS.md).

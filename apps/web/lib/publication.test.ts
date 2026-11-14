@@ -8,9 +8,9 @@ test('read-only publication refuses wallet writes before accessing any provider'
     address: '0x0000000000000000000000000000000000000002', abi: [], functionName: 'deposit', args: [1n] }), /read-only release/);
 });
 
-test('reported wallet warning blocks provider access and connection until reviewed', async () => {
+test('server rendering never invents a connected browser wallet', async () => {
   assert.equal(getInjectedProvider(), null);
-  await assert.rejects(connectWallet(), /MetaMask security warning/);
+  await assert.rejects(connectWallet(), /No browser wallet/);
 });
 
 test('Vercel excludes root operator configuration without excluding frontend config', () => {
