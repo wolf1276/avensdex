@@ -11,7 +11,7 @@
 | Gas | At most **0.05 test AVAX total** (50,000,000,000,000,000 wei), including failed/replaced transactions. This is a proposed ceiling, not an estimate or approval. Stop if worst-case gas liability cannot fit the remaining ceiling and balance. |
 | Other native/token value | **Zero** native transfer value outside gas. No ERC-20 approvals/deposits, swaps, fills, funding actions, hedges or payouts in the initial deployment authorization. |
 | Allowed actions | Only explicitly listed fresh paused-contract creations, immutable module binding and read-only source/runtime/role/domain verification after the release is qualified. Exact constructors, roles, nonce sequence, expected identities/code and transaction list must be frozen before signing. No arbitrary calls or upgrades. |
-| Expiry | Proposed: **24 hours after explicit owner approval**, recorded as an exact UTC expiry before signing. No approval/expiry has been recorded yet. |
+| Expiry | Proposed: **at most 24 hours after explicit owner approval**; freeze the exact UTC expiry in the plan before approval/signing. No approval/expiry has been recorded yet. |
 | Recovery / stop | Stop on wrong chain/provider disagreement, stale or missing evidence, code/role mismatch, unknown transaction outcome, nonce conflict, expiry or exhausted budget. Reconcile canonical receipts, transaction sender/nonce, actual code and balances before any retry. Never reset funded state or discard journals. |
 
 Initial market, collateral, qualified independent oracle, owner/publisher/controller identities, cap and final deployment source revision are **not approved** yet. AVAX/USDC market 1 and the Circle-listed Fuji USDC candidate remain candidates, not enabled assets. No blank/default address may stand in for a role or verification result.
@@ -32,6 +32,10 @@ Exact-delta custody, canonical conservation, fixed-owner payouts, signatures/ris
 6. **Scope separation:** manual deployment verification is not public liquidity, adaptive-funding activation, browser readiness, Guardian/Autopilot, a hedge or profitability. Existing-terminal/status integration and strategy authority remain later work. Unresolved landing/artwork redistribution rights still block publishing those assets.
 
 The contract/wallet public identity is not secret. Keystore/passwords, signed raw transactions and private recovery journals must remain protected outside Git; no deployment preflight needs to read them.
+
+## Offline paused-deployment planner and recovery
+
+The [bounded planner/journal](PAUSED_DEPLOYMENT_RECOVERY.md) now constructs only the three exact creations and settlement binding, binds reviewed artifacts/roles/nonces/fees to a plan hash, and reconciles actual signed identity, canonical receipts and expected runtime. Its 15 local fixture tests pass. All views remain approval-required/execution-disabled. It is not a public reader adapter, signing/broadcast CLI, current asset approval or authorization; these operator gates remain incomplete.
 
 ## Read-only preparation observation
 
