@@ -26,7 +26,9 @@ References: `docs/PHASE3_STATUS.md`, `docs/PAUSED_DEPLOYMENT_RECOVERY.md`, `docs
 ## 2. Protocol work: complete before claiming only integration remains
 
 - [x] Connect canonical settlement-journal reconciliation to durable matcher/feed outcomes and pending-match capacity; generated-signature, restart/reorg and loopback tests are local fixtures, not public execution.
-- [x] Add complete bounded policy-confirmed position aggregation, paired-provider ledger checks, real block timestamps and fail-closed service/feed refresh; mocked RPC/loopback evidence only, no public deployment or unsupported-order activation.
+- [x] Add complete bounded policy-confirmed position aggregation, paired-provider ledger checks, real block timestamps and fail-closed service/feed refresh; local mocked and fresh-Anvil evidence only, no public deployment or unsupported-order activation.
+- [x] Add policy-confirmed adaptive funding/index/mark reads, configured freshness and offline revision/epoch-bound publication proposals, with read-only service data and restart invalidation (`docs/PHASE4_STATUS.md`).
+- [x] Verify the supported local backend lifecycle using actual fresh-Anvil transactions, real generated signatures, matcher/settlement journals, WebSocket reducer, funding expiry, signed cancellation, closed-position reconciliation and settled owner withdrawals. This is not a browser or public Fuji result.
 
 - [ ] Specify independent index, validated mark and premium observations; reject matcher-only price control, stale data and manipulation.
 - [x] Add a pure local funding-controller reference using existing baseline/adaptive math, epoch/revision checks, expiry, stale-gap handling and fractional index carry; see `docs/FUNDING_CONTROLLER.md`.
@@ -118,10 +120,10 @@ Paused deployment is not trading readiness:
 - [ ] Prove real hedge/partial-leg recovery/revocation and restart where strategy functionality is claimed.
 - [ ] Preserve all pending liabilities; publish accurate runbooks, costs, limitations and evidence, without profitability claims.
 
-## 9. Explicitly deferred frontend/backend integration
+## 9. Explicitly deferred frontend and public integration
 
 - [ ] Existing terminal wallet/network/account invalidation, approvals/deposits and supported order controls.
-- [ ] Service wiring for admission, provisional/pending/confirmed/reverted state, canonical settlement capacity release and live data.
+- [ ] Enable qualified public admission/submission and hosted service integration only after real deployment/readiness/authorization gates; trusted local service wiring for outcomes, policy-confirmed reads and capacity release is implemented and locally tested.
 - [ ] Funding/position/cost/receipt displays and strategy controls inside Trade.
 - [ ] Browser reconnect/resync, accessibility/mobile and disconnected/loading/error scenarios.
 - [ ] Public hosting/authentication/rate limits/abuse controls and operational monitoring integration.
@@ -137,4 +139,4 @@ These integrations remain necessary for a usable public product, even after cont
 
 ## Current evidence for this task
 
-OpenCode drafted the bounded deployment-plan CLI descriptor-safety fix and separately reviewed it. Parent review added a subprocess timeout to the FIFO regression and an exact-size boundary test. `npm test` passed locally, including typecheck, TypeScript/Python suites, 118 Foundry tests and the 24-receipt fresh Anvil lifecycle. This is not a clean-install, hosted-CI, browser, historical-fork or public-deployment verification. The checklist remains an acceptance list, not evidence of deployment. No operator keys were accessed, no public transactions were sent, and no blockers above have been silently waived.
+OpenCode drafts were isolated and parent-reviewed before staged-diff review, tests and publication. The latest supported Phase 4 backend checks pass: typecheck; 14 funding, 65 protocol and 118 CLOB tests; 30 Python and 133 Foundry tests; 4 locked Rust tests; formatting/diff checks; and separate 24- and 26-receipt fresh local Anvil lifecycles. Point-in-time `npm audit --omit=dev` reports zero vulnerabilities. See `docs/PHASE4_STATUS.md` for exact scope and limitations. This is not a browser or public-deployment verification. The checklist remains an acceptance list, not evidence of deployment. No operator keys were accessed, no public transactions were sent, and no blockers above have been silently waived.

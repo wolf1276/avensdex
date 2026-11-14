@@ -208,7 +208,7 @@ test('trusted service publishes policy-confirmed positions and invalidates them 
   const liveIdentity = { ...identity, chainId: 43113 };
   const { client, state } = fixture({ chainId: 43113 });
   let now = 1000;
-  const service = await startMarketData(journal, 0, () => now);
+  let service = await startMarketData(journal, 0, () => now);
   const snapshot = () => journal.snapshot();
   const feed = new MarketDataFeed();
   const initial = snapshot();
@@ -222,6 +222,11 @@ test('trusted service publishes policy-confirmed positions and invalidates them 
     const frame = await (await fetch(`http://127.0.0.1:${service.port}/snapshot`)).json();
     assert.equal(feed.receive(frame), 'applied');
     assert.deepEqual(feed.view().snapshot, snapshot());
+    await service.close();
+    service = await startMarketData(journal, 0, () => now);
+    assert.equal(snapshot().confirmedPositions, null, 'restart must not reuse historical position freshness');
+    await service.refreshPositions(client, client, liveIdentity, { confirmations: 2, maxPairs: 256 });
+    assert.equal(snapshot().confirmedPositionsAvailable, true);
     state.timestamp = 900n;
     await assert.rejects(service.refreshPositions(client, client, liveIdentity, { confirmations: 2, maxPairs: 256 }), /STALE/);
     assert.equal(snapshot().confirmedPositions, null);

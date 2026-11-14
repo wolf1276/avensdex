@@ -88,6 +88,7 @@ export class JournaledMatcher {
   }
   snapshot() { return this.matcher.snapshot(); }
   trade(id: string) { return this.matcher.trade(id); }
+  get hasTerminalSettlements() { return this.matcher.hasTerminalSettlements; }
   get writable() { return !this.failed && !this.closed; }
   apply(command: Command, proof: unknown = null) {
     if (!this.writable) throw Error('JOURNAL_UNAVAILABLE_RECONCILE_BEFORE_RETRY');

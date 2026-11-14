@@ -20,7 +20,7 @@ It is **not deployed**, has **no public fills or liquidity**, and is **not produ
 | UI | Existing NEARFlow UI preserved locally only; not in the published tree |
 | Audit | No independent audit; point-in-time `npm audit` only |
 
-Development status is tracked in [Roadmap](docs/ROADMAP.md), [Phase 3 status](docs/PHASE3_STATUS.md) and [live-trading blockers](docs/LIVE_TRADING_BLOCKERS.md).
+Development status is tracked in [Roadmap](docs/ROADMAP.md), [Phase 3 status](docs/PHASE3_STATUS.md), [Phase 4 backend status](docs/PHASE4_STATUS.md) and [live-trading blockers](docs/LIVE_TRADING_BLOCKERS.md).
 
 ## Navigation
 
@@ -43,7 +43,8 @@ Development status is tracked in [Roadmap](docs/ROADMAP.md), [Phase 3 status](do
 - **Bilateral EIP-712 settlement** — two signed sides, cumulative fills, nonce binding, exact-hash cancellation, explicit nonce invalidation and atomic rollback.
 - **Bounded lifecycle** — funding-index application with payer clipping, partial/full owner closes and capped liquidation.
 - **Capped Fuji activation capability** — fresh vaults start paused; only the bootstrap owner can bind settlement and activate; the Fuji liability cap is at most 10 USDC (`10_000_000` base units).
-- **Two-feed oracle** — independently validates two Chainlink feeds and returns base/USD divided by collateral/USD (candidate: AVAX/USD ÷ USDC/USD) with per-feed freshness.
+- **Two-feed oracle** — validates each Chainlink feed separately and returns base/USD divided by collateral/USD (candidate: AVAX/USD ÷ USDC/USD) with per-feed freshness; public sources remain unqualified.
+- **Adaptive funding and canonical backend reads** — standalone epoch/revision-protected funding, settlement outcomes into matcher/feed state, policy-confirmed paired-provider position/funding reads and fail-closed loopback refresh; [local backend lifecycle evidence](docs/PHASE4_STATUS.md), not live public execution.
 - **Offchain market data** — deterministic one-market price-time matching, durable journal, EIP-712 signed admission, sequenced loopback HTTP/WebSocket service and a client resync reducer.
 - **Offline deployment planning** — a draft planner/journal binds Fuji scope, reviewed artifacts, nonces, gas budget and plan hash; it has no operator signer and does not broadcast.
 - **Qualification tooling** — two-provider Fuji RPC checks, a fresh loopback Anvil lifecycle and a pinned historical-fork check.
@@ -52,9 +53,9 @@ Development status is tracked in [Roadmap](docs/ROADMAP.md), [Phase 3 status](do
 
 - Public deployment, activation, collateral acquisition/deposit/withdrawal, fills or hedges.
 - Contract execution for market, reduce-only, post-only, IOC or strategy orders. The offchain matcher supports some of these semantics, but the supported contract settlement rejects them.
-- Adaptive funding controller, existing-terminal wallet/browser integration, live Guardian/Autopilot and genuine spot/hedge routes.
+- Qualified public index/mark sourcing and deployment/publisher integration for the standalone adaptive funding controller; existing-terminal wallet/browser integration, live Guardian/Autopilot and genuine spot/hedge routes.
 - Public feed/asset/venue qualification, a finality/reorg operating policy and independent security review.
-- An integrated public operator signing and policy-confirmed reader pipeline. A read-only two-provider deployment reader and fixed-endpoint inspection CLI exist, but they are not wired to an operator signer, the deployment journal or any submission path; the trusted-publisher adapter remains local-only.
+- A complete authorized public operator signing/submission pipeline. Two-provider deployment reading and existing-journal reconciliation CLIs exist; the backend also has policy-confirmed position/funding reads and offline funding publication proposals, but no public operator signer, automatic retry or live submission path.
 - Hosted production service, public authentication, rate limiting or abuse controls.
 
 The active product is Fuji-only with no PAPER mode or simulated-execution fallback. Local unit, fuzz, benchmark and fork fixtures are tests, not public trades or liquidity.
@@ -114,7 +115,7 @@ forge fmt --root contracts/evm --check
 npm audit --omit=dev
 ```
 
-`npm test` runs the TypeScript funding/protocol/CLOB suites, the Python read-only network tests, the Foundry suites and a fresh loopback-only Anvil settlement lifecycle with generated fixture keys.
+`npm test` runs the TypeScript funding/protocol/CLOB suites, the Python read-only network tests, the Foundry suites and two fresh loopback-only Anvil lifecycles with generated fixture keys. `npm run test:phase4:evm` runs the adaptive-funding → signed-admission → canonical-outcome → position/close/withdrawal backend lifecycle alone; its local chain ID 43113 is not public Fuji.
 
 ### Offline deployment plan
 
@@ -185,7 +186,7 @@ Local verification checkpoint: committed revision `643aa16`. Clean tracked-sourc
 
 Additional checks against the same contract source covered `27` local historical Fuji-fork receipts at block `61048431`. Root `npm audit --omit=dev` reported `0` vulnerabilities at that checkpoint; this is a point-in-time dependency check, not a security audit.
 
-The current tree adds `17` protocol tests for the read-only two-provider deployment reader and its fixed-endpoint inspection CLI, plus `4` offline deployment-plan CLI tests; `npm run typecheck` and `npm run test:protocol` (`48` tests) pass locally. These are unit fixtures with mocked RPC providers or local JSON files, not public Fuji reads or a deployment.
+The expanded local Phase 4 checkpoint passes `npm test`: 14 funding, 65 protocol and 118 CLOB TypeScript tests, 30 Python tests, 133 Foundry tests, plus 24 original lifecycle receipts and 26 additional backend lifecycle receipts on separate fresh local Anvil nodes. Four locked Rust tests and formatting checks pass separately. Root `npm audit --omit=dev` reports zero vulnerabilities at this checkpoint. See [Phase 4 scope, checks and limitations](docs/PHASE4_STATUS.md). No browser, public deployment or independent security audit is claimed.
 
 These are local or pinned historical-fork results. They are not public Fuji transactions, public finality, liquidity, asset qualification or a hosted service. Counts are revision- and environment-scoped and will change as the repository changes. No public addresses, receipt links, deployments or fills are claimed.
 
@@ -225,7 +226,7 @@ Current local demo path:
 2. Optionally run the read-only service and inspect `/health`, `/snapshot` and the loopback WebSocket stream.
 3. Optionally run the historical-fork qualification to reproduce local contract lifecycle receipts.
 
-No live URL, public demo, hosted deployment or trading session is available. Remaining work includes public asset/oracle/venue/finality qualification, adaptive funding and mark/epoch integration, existing-terminal wallet/browser wiring, policy-confirmed reader data, live Guardian/Autopilot, genuine spot/hedge execution, independent review and a separately authorized capped deployment. No completion date is promised.
+No live URL, public demo, hosted deployment or trading session is available. Remaining work includes public asset/index/mark/venue/finality qualification, adaptive-funding deployment and authorized publisher transport, existing-terminal wallet/browser wiring, live Guardian/Autopilot, genuine spot/hedge execution, independent review and a separately authorized capped deployment. The supported local backend gate does not complete the terminal/browser phase or public integration. No completion date is promised.
 
 ## Security and scope
 

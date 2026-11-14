@@ -176,6 +176,11 @@ test('outcomes for trades outside the recent window remain addressable and reduc
   for (const event of result.events) assert.equal(feed.receive(event), 'applied');
   assert.equal(f.matcher.snapshot().pendingSettlements, 129);
   assert.deepEqual(feed.view().snapshot, f.matcher.snapshot());
+  const restarted = await startMarketData(f.matcher, 0, () => 101);
+  try {
+    assert.equal(f.matcher.trade(f.trade.id).settlement, 'unknown');
+    assert.equal(f.matcher.snapshot().pendingSettlements, 130);
+  } finally { await restarted.close(); }
 });
 
 test('real loopback WebSocket receives canonical outcomes while public mutation/readiness stay unavailable', async t => {

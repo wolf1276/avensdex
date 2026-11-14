@@ -25,6 +25,7 @@ The listener is fixed to `127.0.0.1`, default port 8787 (`CLOB_PORT` can select 
 - `GET /health`: liveness, sequence/stream identity and explicit admission/settlement/position unavailability.
 - `GET /ready`: 503 until the genuine trading dependencies exist.
 - `GET /snapshot`: current authoritative stream snapshot; no cache.
+- `GET /funding`: `503` until a trusted `refreshFunding` producer supplies verified paired-provider data. Responses separate actual index/mark observations from the last provisional trade, preserve source timestamps, recheck configured freshness and explicitly report rate expiry. The default executable has no configured producer.
 - `ws://127.0.0.1:8787/stream`: initial snapshot, then sequenced events.
 - Client `{ "type": "resync" }`: refresh snapshot, at most once per second per connection. No arbitrary subscription/write commands.
 
@@ -32,7 +33,7 @@ No HTTP route accepts RPC addresses, order credits, positions, confirmed fills o
 
 ## Sequence protocol
 
-Snapshot and event envelopes contain `streamId`, `marketId`, `seq`, `at`, `type`, `data`. The snapshot's sequence is the last committed event. Events cover order status, absolute price-level size/order-count updates, BBO, provisional trade, blocked settlement and trusted-source position snapshots. Matcher quantity changes do not imply chain-confirmed positions.
+Snapshot and event envelopes contain `streamId`, `marketId`, `seq`, `at`, `type`, `data`. The snapshot's sequence is the last committed event. Events cover order status, absolute price-level size/order-count updates, BBO, provisional trade, blocked settlement, canonical settlement outcomes, trusted-source position snapshots and explicit position invalidation. Matcher quantity changes do not imply chain-confirmed positions. Trusted `reconcileSettlement`, `refreshPositions` and `refreshFunding` producers are described in [settlement reconciliation](SETTLEMENT_RECONCILIATION.md) and [funding](FUNDING_CONTROLLER.md); none are network mutation endpoints. Startup invalidates persisted terminal fills and positions before listening, and failed refreshes never leave old evidence usable as fresh.
 
 `MarketDataFeed` validates bounded wire values and rejects malformed/foreign state. Duplicate earlier events are ignored. A missing sequence, new-stream event, invalid payload or clock regression freezes freshness and requests one resync; further events wait for the authoritative snapshot. Reconnect marks state stale. A same-stream older snapshot cannot roll back state during resync. Position source block/time and freshness are explicit; absent confirmed input remains null. Confirmation states not implemented by the protocol are rejected, not fabricated.
 
@@ -53,6 +54,6 @@ npm run test:clob
 npm run bench:clob
 ```
 
-Forty-five CLOB tests passed: 16 engine/journal, 6 reducer, 12 signed-authorization and 11 real service/CLI/backpressure cases. Coverage includes actual loopback sockets, snapshot/delta equality, dropped-message resync, reconnect, expiry, unsigned mutation refusal, origin/client/frame limits and shutdown/restart without journal loss. Signature tests sign only publicly derived fixture-key typed messages with historical expiry, not live wallet authorizations or transactions. No transactions are submitted.
+The expanded 118-test CLOB suite passes locally. Coverage includes actual loopback sockets, snapshot/delta equality, dropped-message resync, reconnect, expiry, unsigned mutation refusal, origin/client/frame limits, shutdown/restart without journal loss, canonical outcome/capacity downgrades, policy-confirmed paired-ledger reads and fail-closed funding data. Unit RPC responses and signatures are local fixtures, not public authorizations. The separate `npm run test:phase4:evm` check uses actual transactions only on a fresh generated-key loopback Anvil instance; [its evidence](PHASE4_STATUS.md) is not public Fuji execution.
 
 The benchmark script reports core paired matching, 256-maker sweeps, fsync-backed local acknowledgments and loopback delivery separately, with quantiles/hardware/source hashes and explicit methodology limits. Its synthetic inputs are local measurement fixtures only. No matching, delivery, admission or chain-finality latency is inferred from unit-test duration. See [the measured local report](CLOB_BENCHMARK.md); signature/HTTP/WAN/finality/fanout performance remains unmeasured.

@@ -23,7 +23,7 @@ The [Avalanche migration plan](AVAX_MIGRATION_PLAN.md) expands these milestones 
 - [x] Implement canonical custody, exact token deltas, caps, manual-order escrow and owner withdrawals; [local Phase 3 tests](PHASE3_STATUS.md). Public activation and strategy books remain disabled.
 - [x] Implement bounded offchain price-time matching, partial fills, IOC/post-only/reduce-only, expiry and nonces; [Phase 2 signed local admission](CLOB_ADMISSION.md) is tested. Public activation remains gated on actual custody/settlement and deployment readiness.
 - [x] Implement local signed bilateral settlement, fees, partial/full closes and liquidation for supported vanilla limit orders. [Capped Fuji activation](FUJI_ACTIVATION.md) is implemented/historically fork-tested, not publicly deployed or activated.
-- [ ] Implement funding index settlement, payer limits, rounding, epoch protection and stale-gap behavior.
+- [x] Implement/test local funding index settlement, payer limits, rounding, epoch protection and stale-gap behavior; [standalone adaptive controller and backend lifecycle](PHASE4_STATUS.md). Public source qualification, deployment/publisher integration and terminal wiring remain open.
 - [x] Verify local runtime size, Paris compatibility and tested fill/close gas bounds. Public Fuji execution costs/finality and independent assurance remain unqualified.
 
 **Gate:** unit, differential, fuzz and conservation tests pass.

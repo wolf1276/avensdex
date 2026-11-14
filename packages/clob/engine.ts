@@ -26,6 +26,7 @@ export type Command = { type: 'submit'; at: number; order: Order }
   // Trusted canonical reader input only; never a public admission API.
   | { type: 'positions'; at: number; snapshot: Positions }
   | { type: 'invalidatePositions'; at: number; reason: string }
+  | { type: 'invalidateSettlements'; at: number; reason: string }
   // Trusted canonical outcome input only, never a public API.
   | { type: 'settlementOutcome'; at: number; tradeId: string; intentId: string;
       status: Exclude<TradeSettlementStatus, 'blocked'>; reason: string | null };
@@ -100,6 +101,7 @@ export class Matcher {
   }
   snapshot() { return snapshot(this.state); }
   trade(id: string) { const value = this.state.trades.find(t => t.id === id); return value ? structuredClone(value) : null; }
+  get hasTerminalSettlements() { return this.state.trades.some(t => terminalSettlement(t.settlement)); }
   // Prepare on a copy: rejected commands, including resource-limit failures, cannot partially mutate the book.
   prepare(command: Command) {
     const next = structuredClone(this.state), events = execute(next, command);
@@ -118,7 +120,7 @@ export function settlementTransitionAllowed(from: TradeSettlementStatus, to: Tra
 function execute(s: State, c: Command): Event[] {
   exact(c, c.type === 'submit' ? ['type', 'at', 'order'] : c.type === 'cancel' ? ['type', 'at', 'id', 'trader']
     : c.type === 'positions' ? ['type', 'at', 'snapshot']
-    : c.type === 'invalidatePositions' ? ['type', 'at', 'reason']
+    : c.type === 'invalidatePositions' || c.type === 'invalidateSettlements' ? ['type', 'at', 'reason']
     : c.type === 'settlementOutcome' ? ['type', 'at', 'tradeId', 'intentId', 'status', 'reason'] : ['type', 'at']);
   time(c.at); if (c.at < s.clock || s.seq > Number.MAX_SAFE_INTEGER - 10000) throw Error('CLOCK_OR_SEQUENCE_BOUNDS');
   s.clock = c.at;
@@ -157,6 +159,17 @@ function execute(s: State, c: Command): Event[] {
         || BigInt(value) < -(10n ** 15n) || BigInt(value) > 10n ** 15n) throw Error('INVALID_POSITION');
     }
     s.positions = structuredClone(p); emit('positions', structuredClone(p) as unknown as Record<string, unknown>);
+  } else if (c.type === 'invalidateSettlements') {
+    if (typeof c.reason !== 'string' || !/^[A-Z0-9_]{1,80}$/.test(c.reason)) throw Error('INVALID_OUTCOME_REASON');
+    let pending = pendingSettlements(s.trades);
+    for (const trade of s.trades) {
+      if (!terminalSettlement(trade.settlement)) continue;
+      if (trade.settlementIntentId === undefined) throw Error('MISSING_SETTLEMENT_INTENT');
+      const previousStatus = trade.settlement;
+      trade.settlement = 'unknown';
+      emit('settlementOutcome', { tradeId: trade.id, intentId: trade.settlementIntentId, previousStatus,
+        status: 'unknown', reason: c.reason, pendingSettlements: ++pending });
+    }
   } else if (c.type === 'invalidatePositions') {
     if (typeof c.reason !== 'string' || !/^[A-Z0-9_]{1,80}$/.test(c.reason)) throw Error('INVALID_POSITION_REASON');
     s.positions = null;

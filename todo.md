@@ -51,11 +51,17 @@ Evidence: [foundation checks](docs/FOUNDATION_CHECKS.md), [Phase 1 scope](docs/P
 
 ## Phase 4 — existing terminal, adaptive funding and lifecycle (P0d/P1)
 
+**Supported local backend gate delivered:** [scope and fresh local EVM lifecycle](docs/PHASE4_STATUS.md). Full Phase 4 remains open: existing-terminal/browser work is deferred, and qualified public sources, deployment/publisher transport and activation are not claimed.
+
+- [x] Wire canonical settlement-journal outcomes into durable matcher/feed state and pending capacity, including restart/unknown/reorg downgrades; no blind retries or simulated positions.
+- [x] Read complete bounded policy-confirmed positions and funding from paired providers at pinned blocks, preserving actual source timestamps and failing closed on stale/inconsistent data.
+- [x] Distinguish backend last provisional trade, independent index and validated-mark adapter observations; verify code/reference identities without claiming public economic independence.
+- [x] Verify a fresh local backend EVM lifecycle through funding proposal calldata, signed admission/fill/cancellation, canonical outcomes, actual funding, expired-rate owner exits, withdrawals and restart; HTTP mutations/readiness stay unavailable.
 - [ ] Preserve existing landing/Trade layout/branding; no standalone book demo or terminal rebuild.
 - [ ] Wire EVM wallet/chain/account invalidation, approvals/deposits and typed contract reads/mutations.
 - [ ] Connect live depth/BBO/spread/trades, supported order controls and explicit provisional/pending/confirmed/reverted states; wire canonical settlement outcomes and pending-match capacity release into the existing journal/feed without retrying unknown outcomes. Unsupported market/flags stay unavailable.
-- [ ] Distinguish last traded price, independent index and validated mark; matcher cannot unilaterally control funding or liquidation.
-- [ ] Apply baseline/adaptive math, smoothing/caps, oracle freshness, epochs/rate expiry, index settlement and payment conservation. Never use matched long-OI-minus-short-OI as the primary premium signal.
+- [ ] Wire the distinct last-trade/index/mark data into the existing terminal and qualify genuine public sources; matcher cannot unilaterally control funding or liquidation.
+- [x] Implement/test local baseline/adaptive math, smoothing/caps, oracle freshness, epochs/rate expiry, index settlement and payment conservation. Never use matched long-OI-minus-short-OI as the primary premium signal; public qualification and publisher integration remain open.
 - [ ] Show actual funding, positions, margin, costs and real explorer links; unavailable sources fail closed, not simulated success.
 - [ ] Test real local wallet/browser flow, sequence reconnect/resync, cancellation races, stale data, keyboard/mobile/error states.
 
