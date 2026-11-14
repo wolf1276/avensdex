@@ -11,10 +11,11 @@ interface IVaultCollateral {
 interface IVaultSettlementBinding {
     function vault() external view returns (address);
     function deploymentId() external view returns (bytes32);
+    function activationReady() external view returns (bool);
 }
 
 /// @notice Canonical custody and bounded accounting for a single frozen settlement module.
-/// @dev Fuji activation and strategy authority remain unavailable.
+/// @dev Fuji starts paused and requires explicit owner qualification attestation; strategy authority is unavailable.
 contract AvensVault {
     error InvalidConfiguration();
     error Unauthorized();
@@ -34,7 +35,12 @@ contract AvensVault {
     address public immutable bootstrapOwner;
     bytes32 public immutable deploymentId;
     uint128 public immutable depositCap6;
+    uint256 public immutable deploymentChainId;
+    bytes32 public immutable collateralRuntimeHash;
+    bytes32 public settlementRuntimeHash;
+    bytes32 public activationEvidenceHash;
     bool public depositsActive;
+    bool public entriesPaused = true;
     uint256 public totalLiabilities6;
     mapping(address => uint128) public freeBalance;
     address public settlementModule;
@@ -62,6 +68,8 @@ contract AvensVault {
     bool private entered;
 
     event DepositsActivated();
+    event EntriesPaused(bool paused);
+    event FujiActivated(bytes32 indexed evidenceHash);
     event Deposited(address indexed owner, uint128 amount6);
     event Withdrawn(address indexed owner, uint128 amount6);
     event SettlementBound(address indexed module);
@@ -73,11 +81,14 @@ contract AvensVault {
             (block.chainid != 31337 && block.chainid != 43113) || token.code.length == 0 || identity == bytes32(0)
                 || cap6 == 0
         ) revert InvalidConfiguration();
+        if (block.chainid == 43113 && cap6 > 10_000_000) revert InvalidConfiguration();
         if (IVaultCollateral(token).decimals() != 6) revert InvalidConfiguration();
         collateralToken = token;
         bootstrapOwner = msg.sender;
         deploymentId = identity;
         depositCap6 = cap6;
+        deploymentChainId = block.chainid;
+        collateralRuntimeHash = token.codehash;
     }
 
     modifier nonReentrant() {
@@ -88,11 +99,16 @@ contract AvensVault {
     }
 
     modifier onlySettlement() {
-        if (msg.sender != settlementModule || settlementModule == address(0)) revert Unauthorized();
+        _network();
+        if (
+            msg.sender != settlementModule || settlementModule == address(0)
+                || settlementModule.codehash != settlementRuntimeHash
+        ) revert Unauthorized();
         _;
     }
 
     function bindSettlement(address module) external {
+        _network();
         if (msg.sender != bootstrapOwner) revert Unauthorized();
         if (
             depositsActive || settlementModule != address(0) || module.code.length == 0 || module == address(this)
@@ -100,15 +116,68 @@ contract AvensVault {
                 || IVaultSettlementBinding(module).deploymentId() != deploymentId
         ) revert InvalidConfiguration();
         settlementModule = module;
+        settlementRuntimeHash = module.codehash;
         emit SettlementBound(module);
     }
 
-    /// @dev Fuji remains unavailable until public asset/deployment activation is implemented.
+    /// @dev Standalone local custody tests cannot activate public custody with this method.
     function activateDeposits() external {
+        _network();
         if (msg.sender != bootstrapOwner) revert Unauthorized();
         if (block.chainid != 31337 || depositsActive) revert DepositsUnavailable();
         depositsActive = true;
+        entriesPaused = false;
         emit DepositsActivated();
+    }
+
+    /// @notice Owner attests the reviewed evidence digest; a hash itself is not asset qualification.
+    function activateFuji(bytes32 evidenceHash) external {
+        _network();
+        if (msg.sender != bootstrapOwner) revert Unauthorized();
+        if (block.chainid != 43113 || depositsActive || evidenceHash == bytes32(0)) revert DepositsUnavailable();
+        _fujiReady();
+        activationEvidenceHash = evidenceHash;
+        depositsActive = true;
+        entriesPaused = false;
+        emit FujiActivated(evidenceHash);
+        emit DepositsActivated();
+    }
+
+    /// @notice Pauses only new liabilities/exposure; existing owners retain withdrawal and close paths.
+    function setEntriesPaused(bool paused) external {
+        _network();
+        if (msg.sender != bootstrapOwner) revert Unauthorized();
+        if (!paused) {
+            if (!depositsActive) revert DepositsUnavailable();
+            if (block.chainid == 43113) _fujiReady();
+        }
+        entriesPaused = paused;
+        emit EntriesPaused(paused);
+    }
+
+    function _fujiReady() private view {
+        if (
+            settlementModule == address(0) || settlementModule.codehash != settlementRuntimeHash
+                || collateralToken.codehash != collateralRuntimeHash
+                || IVaultCollateral(collateralToken).decimals() != 6
+                || !IVaultSettlementBinding(settlementModule).activationReady()
+        ) revert DepositsUnavailable();
+    }
+
+    function _network() private view {
+        if (block.chainid != deploymentChainId || (block.chainid != 31337 && block.chainid != 43113)) {
+            revert DepositsUnavailable();
+        }
+    }
+
+    function _entries() private view {
+        _network();
+        if (
+            !depositsActive || entriesPaused || collateralToken.codehash != collateralRuntimeHash
+                || (settlementModule != address(0) && settlementModule.codehash != settlementRuntimeHash)
+        ) {
+            revert DepositsUnavailable();
+        }
     }
 
     function accounting() public view returns (uint256 custody, uint256 liabilities, uint256 surplus) {
@@ -122,7 +191,7 @@ contract AvensVault {
     }
 
     function deposit(uint128 amount6) external nonReentrant {
-        if (!depositsActive || block.chainid != 31337) revert DepositsUnavailable();
+        _entries();
         if (amount6 == 0) revert InvalidAmount();
         if (totalLiabilities6 + amount6 > depositCap6) revert CapExceeded();
         (uint256 custodyBefore,,) = accounting();
@@ -142,6 +211,7 @@ contract AvensVault {
 
     /// @notice Only the caller's unencumbered balance can be paid, only to that same caller.
     function withdraw(uint128 amount6) external nonReentrant {
+        _network();
         if (amount6 == 0) revert InvalidAmount();
         if (freeBalance[msg.sender] < amount6) revert InsufficientBalance();
         (uint256 custodyBefore,,) = accounting();
@@ -168,6 +238,7 @@ contract AvensVault {
     }
 
     function reserveOrder(bytes32 orderHash, address owner, uint128 amount6) external onlySettlement nonReentrant {
+        _entries();
         accounting();
         if (orderHash == bytes32(0) || owner == address(0) || amount6 == 0) revert InvalidReservation();
         if (reservations[orderHash].owner != address(0)) revert InvalidReservation();
@@ -198,6 +269,7 @@ contract AvensVault {
         uint128 longFee6,
         uint128 shortFee6
     ) external onlySettlement nonReentrant {
+        _entries();
         accounting();
         if (
             pairId == 0 || usedPairIds[pairId] || longHash == bytes32(0) || shortHash == bytes32(0)

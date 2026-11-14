@@ -277,10 +277,10 @@ contract AvensVaultTest {
         new AvensVault(address(token), DEPLOYMENT, CAP);
     }
 
-    function testFujiDeploymentCannotActivateOrDeposit() public {
+    function testFujiDeploymentWithoutQualifiedModuleCannotActivateOrDeposit() public {
         vm.chainId(43113);
         MockVaultToken token = new MockVaultToken(6);
-        AvensVault vault = new AvensVault(address(token), DEPLOYMENT, CAP);
+        AvensVault vault = new AvensVault(address(token), DEPLOYMENT, 10_000_000);
 
         require(vault.bootstrapOwner() == address(this));
         vm.expectRevert();

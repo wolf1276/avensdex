@@ -117,8 +117,21 @@ contract AvensOracleTest {
         oracle.fundingIndex(1);
         vm.warp(1061);
         _publish(100e18);
-        vm.expectRevert();
-        oracle.fundingIndex(1);
+        (index, validUntil) = oracle.fundingIndex(1);
+        require(index == 0 && validUntil == 1060);
+    }
+
+    function testNonzeroTerminalIndexFreezesAndRenewalDoesNotBackfill() public {
+        _rate(1e12, 10);
+        vm.warp(1020);
+        (int128 index, uint64 expiry) = oracle.fundingIndex(1);
+        require(index == 10e12 && expiry == 1010);
+        vm.warp(1050);
+        (index,) = oracle.fundingIndex(1);
+        require(index == 10e12);
+        _rate(0, 10);
+        (index, expiry) = oracle.fundingIndex(1);
+        require(index == 10e12 && expiry == 1060);
     }
 
     function testCheckpointsSignReversalAndExpiredGapWithoutBackfill() public {

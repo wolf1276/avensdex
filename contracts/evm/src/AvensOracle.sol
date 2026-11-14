@@ -79,7 +79,7 @@ contract AvensOracle is IOracleAdapter {
     function fundingIndex(uint32 market) external view returns (int128 index18, uint64 validUntil) {
         price(market); // Funding does not make stale price observations executable.
         validUntil = rateValidUntil;
-        if (validUntil == 0 || block.timestamp > validUntil) revert Unavailable();
+        if (validUntil == 0) revert Unavailable(); // Expired terminal indices remain usable for existing exits.
         index18 = _indexAt(block.timestamp);
     }
 

@@ -41,6 +41,6 @@ OpenCode drafted the settlement contract/tests and journal/tests. Pi integration
 
 ## Public and later-phase gates remain closed
 
-Fuji deposits, price/rate publication and settlement mutations cannot activate in these versions. Mainnet is rejected; the manifest remains execution-disabled and HTTP writes/readiness stay 503. An address, matching signature, local test result or observed code hash cannot flip those gates.
+The original local Phase 3 build could not activate Fuji. The subsequent [capped Fuji activation/two-feed release](FUJI_ACTIVATION.md) implements that contract capability and historical fork checks; no public deployment/activation has occurred. The local publisher adapter still cannot publish on Fuji. Mainnet is rejected; the manifest remains execution-disabled and HTTP writes/readiness stay 503. An address, matching signature, local test result or observed code hash cannot flip those gates.
 
 Independent asset/oracle/venue/canonicality qualification, adaptive funding/mark/epoch integration, the existing terminal's genuine wallet/browser lifecycle, Guardian/Autopilot strategy authority and both-leg execution, redistribution rights, independent security review and bounded public signing/deployment authorization remain Phase 1/4/5/6 work. No public lifecycle, live hedge, yield, liquidity or release-readiness claim is made.

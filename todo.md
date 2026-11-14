@@ -37,7 +37,7 @@ Evidence: [foundation checks](docs/FOUNDATION_CHECKS.md), [Phase 1 scope](docs/P
 
 ## Phase 3 — canonical collateral and signed atomic settlement (P0; supported local gate complete)
 
-- [x] Implement [local-only exact-delta ERC-20 custody](docs/COLLATERAL_VAULT.md), cap, reentrancy/donation handling, canonical free balances and fixed-owner withdrawals. Fuji deposits cannot activate.
+- [x] Implement [local-only exact-delta ERC-20 custody](docs/COLLATERAL_VAULT.md), cap, reentrancy/donation handling, canonical free balances and fixed-owner withdrawals. A [separate capped Fuji activation path](docs/FUJI_ACTIVATION.md) is implemented/historically fork-tested; public activation and signing remain unapproved.
 - [x] Extend the same canonical ledger with manual-order escrow/reservations, pair margins and fees/insurance; freeze one code/reference-checked settlement binding before local activation. Public activation stays hard-disabled. Strategy buckets/authority remain Phase 5 work and cannot be enabled through the manual schema.
 - [x] Implement EIP-712 validation, trader identity, chain/deployment domain, monotonic explicit nonce invalidation, exact-hash cancellation, expiry and cumulative partial-fill accounting.
 - [x] Validate both counterparties' price limits, signed fee caps, leverage/margin/collateral, independent-reference price band and position/size/liquidation constraints before atomically applying a matched fill.

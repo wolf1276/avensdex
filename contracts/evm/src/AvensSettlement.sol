@@ -145,7 +145,7 @@ contract AvensSettlement {
                 || address(oracle_).code.length == 0 || address(vault_) == address(this)
                 || address(oracle_) == address(this) || address(vault_) == address(oracle_) || marketId_ == 0
                 || marketId_ > 8 || address(oracle_) == vault_.collateralToken() || maxOracleAge_ == 0
-                || maxOracleAge_ > 3600
+                || maxOracleAge_ > (block.chainid == 43113 ? 86400 : 3600)
         ) revert InvalidConfiguration();
         bytes32 id = vault_.deploymentId();
         if (id == bytes32(0)) revert InvalidConfiguration();
@@ -175,7 +175,7 @@ contract AvensSettlement {
         uint128 fillSize6,
         uint128 fillPrice18
     ) external {
-        _requireTrading();
+        _requireEntry();
         if (longOrder.side != 0 || shortOrder.side != 1) revert InvalidSide();
         MatchInfo memory m;
         (m.oraclePrice18, m.fundingIndex18) = _freshOracle();
@@ -240,7 +240,7 @@ contract AvensSettlement {
 
     /// @notice Caller-funded escrow for its own signed order, bounded by remaining initial margin plus fee.
     function reserveOrder(ClobAuth.Order calldata order, bytes calldata signature, uint128 amount6) external {
-        _requireTrading();
+        _requireEntry();
         bytes32 hash = _verifyOrder(order, signature);
         _checkActive(order);
         if (msg.sender != order.trader) revert Unauthorized();
@@ -305,7 +305,7 @@ contract AvensSettlement {
         _requireTrading();
         Pair storage meta = pairs[pairId];
         if (meta.size6 == 0) revert InvalidPair();
-        (, int128 index18) = _freshOracle();
+        (, int128 index18) = _oracleSnapshot(false);
         _applyFunding(pairId, meta, vault.pairMargins(pairId), index18);
     }
 
@@ -314,7 +314,7 @@ contract AvensSettlement {
         _requireTrading();
         Pair storage meta = pairs[pairId];
         if (meta.size6 == 0) revert InvalidPair();
-        (uint128 price18, int128 index18) = _freshOracle();
+        (uint128 price18, int128 index18) = _oracleSnapshot(false);
         AvensVault.PairMargins memory pm = vault.pairMargins(pairId);
         if (msg.sender != pm.longOwner && msg.sender != pm.shortOwner) revert NotPairOwner();
         _applyFunding(pairId, meta, pm, index18);
@@ -344,7 +344,7 @@ contract AvensSettlement {
         Pair storage meta = pairs[pairId];
         if (meta.size6 == 0) revert InvalidPair();
         LiquidationInfo memory info;
-        (info.price18, info.index18) = _freshOracle();
+        (info.price18, info.index18) = _oracleSnapshot(false);
         AvensVault.PairMargins memory pm = vault.pairMargins(pairId);
         _applyFunding(pairId, meta, pm, info.index18);
         pm = vault.pairMargins(pairId);
@@ -386,8 +386,18 @@ contract AvensSettlement {
         );
     }
 
+    /// @notice Readiness is a contract check, not an asset/code qualification or deployment approval.
+    function activationReady() external view returns (bool) {
+        _freshOracle();
+        return vault.settlementModule() == address(this) && vault.deploymentId() == deploymentId;
+    }
+
     function _freshOracle() internal view returns (uint128 price18, int128 index18) {
-        if (block.chainid != 31337 || block.chainid != deploymentChainId) revert TradingUnavailable();
+        return _oracleSnapshot(true);
+    }
+
+    function _oracleSnapshot(bool requireLiveRate) internal view returns (uint128 price18, int128 index18) {
+        _requireTrading();
         T.Price memory observed = oracle.price(marketId);
         if (
             observed.price18 == 0 || observed.price18 > MAX_PRICE18 || observed.sourceTimestamp == 0
@@ -396,7 +406,8 @@ contract AvensSettlement {
         ) revert InvalidOracle();
         uint64 validUntil;
         (index18, validUntil) = IFundingOracle(address(oracle)).fundingIndex(marketId);
-        if (validUntil == 0 || block.timestamp > validUntil) revert InvalidOracle();
+        // An expired, frozen terminal index can settle existing liabilities; it cannot open new exposure.
+        if (validUntil == 0 || (requireLiveRate && block.timestamp >= validUntil)) revert InvalidOracle();
         price18 = observed.price18;
     }
 
@@ -526,7 +537,14 @@ contract AvensSettlement {
         if (uint256(fee) > U.ceilDiv(uint256(notional6) * maxFeeBps, BPS)) revert InvalidFee();
     }
 
+    function _requireEntry() internal view {
+        _requireTrading();
+        if (!vault.depositsActive() || vault.entriesPaused()) revert TradingUnavailable();
+    }
+
     function _requireTrading() internal view {
-        if (block.chainid != 31337 || block.chainid != deploymentChainId) revert TradingUnavailable();
+        if (block.chainid != deploymentChainId || (block.chainid != 31337 && block.chainid != 43113)) {
+            revert TradingUnavailable();
+        }
     }
 }
