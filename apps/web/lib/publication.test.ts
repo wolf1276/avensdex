@@ -13,6 +13,12 @@ test('reported wallet warning blocks provider access and connection until review
   await assert.rejects(connectWallet(), /MetaMask security warning/);
 });
 
+test('Vercel excludes root operator configuration without excluding frontend config', () => {
+  const rules = readFileSync(new URL('../../../.vercelignore', import.meta.url), 'utf8').split('\n');
+  assert(rules.includes('/config/'));
+  for (const directory of ['app', 'components', 'config', 'features', 'lib', 'public']) assert(!rules.includes(`${directory}/`));
+});
+
 test('browser deployment addresses use literal Next public env references', () => {
   const config = readFileSync(new URL('../config/networks.ts', import.meta.url), 'utf8');
   for (const name of ['VAULT', 'SETTLEMENT', 'ORACLE']) assert(config.includes(`process.env.NEXT_PUBLIC_FUJI_${name}`));
