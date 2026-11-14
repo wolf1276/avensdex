@@ -4,7 +4,7 @@
 
 `services/clob/market-data.ts` runs a real loopback HTTP/WebSocket server backed by the durable journal. `packages/clob/feed.ts` is a browser-safe reducer for the existing terminal. It is not a new terminal/demo page and is not yet wired into the archived NEAR frontend.
 
-The current executable is read-only: **all network writes return 503**, including unsigned orders, cancellation, positions and admin mutations. `/ready` is 503. There is no server signer, public transaction sender, PAPER mode or simulated execution fallback. Signed local admission is now [implemented and tested](CLOB_ADMISSION.md); until genuine Fuji deployment validation and settlement exist, the executable still shows an empty/unavailable market honestly. `applySigned` is trusted in-process ingress only, not a public API or activation bypass. Internal producer calls in automated tests/benchmarks use fixtures, not public liquidity or testnet receipts.
+The executable defaults to read-only. An explicit `CLOB_CONFIG_FILE` enables **canonically gated signed ingress**, not activation: runtime hashes, deployment/module links, Fuji chain, cap, current entry readiness, nonce/cancellation state and full owner-funded on-chain order escrow must verify at one paired, policy-confirmed block. Unsigned/unescrowed/stale/foreign orders cannot enter the book. `/ready` remains 503 because public settlement submission is not wired. There is no server signer, public transaction sender, PAPER mode or simulated execution fallback. Internal producer calls in automated tests/benchmarks use fixtures, not public liquidity or testnet receipts.
 
 The service remains centralized and single-host. It has no custody authority. Source NEAR programs and funded state are untouched.
 
@@ -20,7 +20,9 @@ CLOB_JOURNAL_DIR=/absolute/external/path/avensdex-clob npm run clob:serve -- --c
 CLOB_JOURNAL_DIR=/absolute/external/path/avensdex-clob npm run clob:serve
 ```
 
-The listener is fixed to `127.0.0.1`, default port 8787 (`CLOB_PORT` can select another local port). The journal is bound to Fuji C-Chain `43113`, one market ID and a currently unset settlement contract. This is configuration identity, not proof of a live deployment. Existing journals cannot be rebound to another chain/market/contract or silently reset.
+The listener is fixed to `127.0.0.1`, default port 8787 (`CLOB_PORT` can select another local port). Without admission configuration, the journal has an unset settlement contract. With an absolute `CLOB_CONFIG_FILE`, it is bound to that exact Fuji settlement. The JSON must contain exactly `chainId:43113`, `marketId:1`, `deploymentId`, `vault`, `settlement`, `oracle`, `vaultCodeHash`, `settlementCodeHash`, `oracleCodeHash` and `confirmations` (3–100). Addresses/hashes are lowercase, nonzero reviewed pins. RPC URLs are fixed in the executable. This is configuration identity, not proof of a live deployment; every admission rechecks actual paired state. Existing journals cannot be rebound or silently reset.
+
+`CLOB_ALLOWED_ORIGIN=https://avensdex.vercel.app` explicitly permits that exact browser origin for CORS and WebSocket access; wildcard, HTTP and lookalike origins are not accepted as configured origins. TLS must terminate at the host reverse proxy. No wallet secret belongs in either configuration file.
 
 - `GET /health`: liveness, sequence/stream identity and explicit admission/settlement/position unavailability.
 - `GET /ready`: 503 until the genuine trading dependencies exist.
@@ -29,7 +31,12 @@ The listener is fixed to `127.0.0.1`, default port 8787 (`CLOB_PORT` can select 
 - `ws://127.0.0.1:8787/stream`: initial snapshot, then sequenced events.
 - Client `{ "type": "resync" }`: refresh snapshot, at most once per second per connection. No arbitrary subscription/write commands.
 
-No HTTP route accepts RPC addresses, order credits, positions, confirmed fills or withdrawal recipients. Network order admission will need its own cryptographic and verified-deployment gate; it is not enabled by providing a made-up contract address.
+- `GET /admission/ready`: canonical admission probe; returns 200 only after actual gates pass, with **global `ready:false` and settlement unavailable**. This does not claim executable settlement.
+- `POST /orders`: JSON `{type:'order',order,signature}` using the exact EIP-712 schema; only vanilla limit orders with leverage ≤10 and contract-supported fees/flags. Full initial-margin-plus-fee escrow for this exact signed hash must already exist on-chain. Returns 202 `accepted_provisional`, never a confirmed fill.
+- `POST /cancel`: signed cancellation envelope; removes the local quote only. The response explicitly requires separate on-chain cancellation; local removal does not revoke an independently relayable signature.
+- `GET /orderbook`, `/orders`, `/trades`: journal-backed snapshot, orders and explicitly provisional trades, respectively.
+
+No HTTP route accepts RPC addresses, order credits, positions, confirmed fills, native payments, private keys or withdrawal recipients. Admission bodies are capped at 8192 bytes, one verification is in flight, and at most eight gated requests are admitted per ten seconds. Exact-origin checks, bounded connections and reverse-proxy controls supplement signature/escrow authorization; they are not a full public abuse/security audit. Failed or duplicate writes do not mutate state and require state reconciliation before a client retries.
 
 ## Sequence protocol
 
@@ -46,6 +53,14 @@ The future terminal adapter must coalesce the reducer's `resync` result into one
 - Expiry timer journals removals before broadcasting. Shutdown closes connections then allows the caller to close the journal; the CLI does so on SIGINT/SIGTERM.
 - Journal fsync-before-events, digest/replay checks and unknown-write/crash lock behavior are described in [the engine report](CLOB_ENGINE.md). Never auto-steal locks, truncate a damaged tail, delete pending records or report unknown writes as successful.
 
+## Current public deployment versus local execution evidence
+
+`config/fuji-clob.json` records the actual paused release deployed from contract source `8877179f02d6821576bc1af83adc5e7578787e9f`. Deployment/binding receipts are [vault](https://testnet.snowtrace.io/tx/0xc9c1f05fa669aeceed5a7c394523db3cc0a3a3574c9aacd57cdc5bd79722f1a5), [oracle](https://testnet.snowtrace.io/tx/0x1b27e73c8bc322887cfc2e6d38298db209e9bc1de242ac87f7ca6730fa901126), [settlement](https://testnet.snowtrace.io/tx/0xc53d8fe40d2a5a734699796a28316091c2b719ea72b20792bd97333473d79afa) and [binding](https://testnet.snowtrace.io/tx/0x5d957c3208205ffb8a1f28a5b17a15ff9478f11fc026f89c4bad2d9a1a3d06f0). These are deployment transactions, not orders or fills.
+
+At 2026-11-14 18:34:42 UTC, the new gate was checked read-only against the two fixed public Fuji providers: all runtime/module pins passed and admission correctly refused the paused contracts (`FUJI_ENTRIES_UNAVAILABLE`). No transaction was submitted by that check; it does not establish fresh economic qualification or authorize activation.
+
+The expanded local Phase 4 regression now reserves both signed orders on-chain, confirms escrow, rejects an unreserved HTTP order, admits both orders through actual HTTP, and reconciles the local fill/funding/close/withdraw/restart lifecycle: **28 loopback Anvil receipts**, not public Fuji trades.
+
 ## Checks and measurement
 
 ```sh
@@ -54,6 +69,6 @@ npm run test:clob
 npm run bench:clob
 ```
 
-The expanded 118-test CLOB suite passes locally. Coverage includes actual loopback sockets, snapshot/delta equality, dropped-message resync, reconnect, expiry, unsigned mutation refusal, origin/client/frame limits, shutdown/restart without journal loss, canonical outcome/capacity downgrades, policy-confirmed paired-ledger reads and fail-closed funding data. Unit RPC responses and signatures are local fixtures, not public authorizations. The separate `npm run test:phase4:evm` check uses actual transactions only on a fresh generated-key loopback Anvil instance; [its evidence](PHASE4_STATUS.md) is not public Fuji execution.
+The expanded 122-test CLOB suite passes locally, including actual HTTP signed ingress with unit-RPC escrow fixtures and rejection of missing escrow, cancellation/replay, bad runtime/identity, stale/reorged/disagreeing sources, oversized/malformed input and origin spoofing. Coverage includes actual loopback sockets, snapshot/delta equality, dropped-message resync, reconnect, expiry, unsigned mutation refusal, origin/client/frame limits, shutdown/restart without journal loss, canonical outcome/capacity downgrades, policy-confirmed paired-ledger reads and fail-closed funding data. Unit RPC responses and signatures are local fixtures, not public authorizations. The separate `npm run test:phase4:evm` check uses actual transactions only on a fresh generated-key loopback Anvil instance; [its evidence](PHASE4_STATUS.md) is not public Fuji execution.
 
 The benchmark script reports core paired matching, 256-maker sweeps, fsync-backed local acknowledgments and loopback delivery separately, with quantiles/hardware/source hashes and explicit methodology limits. Its synthetic inputs are local measurement fixtures only. No matching, delivery, admission or chain-finality latency is inferred from unit-test duration. See [the measured local report](CLOB_BENCHMARK.md); signature/HTTP/WAN/finality/fanout performance remains unmeasured.

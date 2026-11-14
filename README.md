@@ -4,7 +4,7 @@
 
 Avensdex is an Avalanche port of the NEARFlow perpetual trading design. The repository contains a deterministic offchain matcher, an EIP-712 authorized bilateral settlement path, a canonical collateral ledger, bounded funding/close/liquidation logic, a capped Fuji activation path and read-only qualification tooling.
 
-It is **not deployed**, has **no public fills or liquidity**, and is **not production software**. Mainnet is disabled. No security audit is claimed.
+Vault, feed oracle and settlement are **deployed on Fuji but paused**, with **no public fills or liquidity**. It is **not production software**. Mainnet is disabled. No security audit is claimed.
 
 ## Status at a glance
 
@@ -12,12 +12,12 @@ It is **not deployed**, has **no public fills or liquidity**, and is **not produ
 | --- | --- |
 | Network target | Avalanche C-Chain Fuji (`43113`); local tests use `31337` |
 | Mainnet | Disabled and rejected by contracts/config |
-| Public deployment / activation | None |
-| Public transactions / fills / receipts | None |
+| Public deployment / activation | Three Fuji modules deployed and bound; paused, not activated |
+| Public transactions / fills / receipts | Four confirmed deployment/binding transactions; no trading fills |
 | Contract execution support | Manual vanilla limit orders only |
-| Trading service | Read-only; `/ready` and mutations return `503` |
+| Trading service | Canonically escrow-gated signed HTTP ingress implemented/tested; public host and settlement transport pending, `/ready` remains `503` |
 | Config | `executionEnabled:false`, `mainnetEnabled:false` |
-| UI | Existing NEARFlow UI preserved locally only; not in the published tree |
+| UI | Existing landing/terminal published under `apps/web`; read-only Fuji release, wallet connection blocked pending security-warning review |
 | Audit | No independent audit; point-in-time `npm audit` only |
 
 Development status is tracked in [Roadmap](docs/ROADMAP.md), [Phase 3 status](docs/PHASE3_STATUS.md), [Phase 4 backend status](docs/PHASE4_STATUS.md) and [live-trading blockers](docs/LIVE_TRADING_BLOCKERS.md).
@@ -46,16 +46,16 @@ Development status is tracked in [Roadmap](docs/ROADMAP.md), [Phase 3 status](do
 - **Two-feed oracle** — validates each Chainlink feed separately and returns base/USD divided by collateral/USD (candidate: AVAX/USD ÷ USDC/USD) with per-feed freshness; public sources remain unqualified.
 - **Adaptive funding and canonical backend reads** — standalone epoch/revision-protected funding, settlement outcomes into matcher/feed state, policy-confirmed paired-provider position/funding reads and fail-closed loopback refresh; [local backend lifecycle evidence](docs/PHASE4_STATUS.md), not live public execution.
 - **Offchain market data** — deterministic one-market price-time matching, durable journal, EIP-712 signed admission, sequenced loopback HTTP/WebSocket service and a client resync reducer.
-- **Offline deployment planning** — a draft planner/journal binds Fuji scope, reviewed artifacts, nonces, gas budget and plan hash; it has no operator signer and does not broadcast.
+- **Bounded paused deployment** — a planner/journal and separate operator CLI bind Fuji scope, reviewed artifacts, nonces, gas budget and exact plan approval. Four real deployment/binding calls were canonically confirmed; this CLI does not activate custody or submit fills.
 - **Qualification tooling** — two-provider Fuji RPC checks, a fresh loopback Anvil lifecycle and a pinned historical-fork check.
 
 ### Not integrated or not publicly verified
 
-- Public deployment, activation, collateral acquisition/deposit/withdrawal, fills or hedges.
+- Public activation, protocol collateral deposits/withdrawals, fills or hedges. Paused deployment addresses and runtime pins are recorded in `config/fuji-clob.json`; the deployment itself is not a trading lifecycle.
 - Contract execution for market, reduce-only, post-only, IOC or strategy orders. The offchain matcher supports some of these semantics, but the supported contract settlement rejects them.
 - Qualified public index/mark sourcing and deployment/publisher integration for the standalone adaptive funding controller; existing-terminal wallet/browser integration, live Guardian/Autopilot and genuine spot/hedge routes.
 - Public feed/asset/venue qualification, a finality/reorg operating policy and independent security review.
-- A complete authorized public operator signing/submission pipeline. Two-provider deployment reading and existing-journal reconciliation CLIs exist; the backend also has policy-confirmed position/funding reads and offline funding publication proposals, but no public operator signer, automatic retry or live submission path.
+- A public trading settlement signing/submission pipeline. The separate paused-deployment CLI exists, but does not supply a trading executor; the backend has canonical reconciliation and offline funding proposals, not automatic live fill dispatch or retries.
 - Hosted production service, public authentication, rate limiting or abuse controls.
 
 The active product is Fuji-only with no PAPER mode or simulated-execution fallback. Local unit, fuzz, benchmark and fork fixtures are tests, not public trades or liquidity.

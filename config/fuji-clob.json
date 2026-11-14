@@ -1,0 +1,12 @@
+{
+  "chainId": 43113,
+  "marketId": 1,
+  "deploymentId": "0x0c46f3f6d42212adeec4ce2b7c7e390fe324186f0637fc1a62822a5eb26cae1a",
+  "vault": "0x893ee792d30d26bf17e249d331efcb4faccd08af",
+  "settlement": "0xf830c95500ddd5c99575c965c5c0dce05e7dc1fe",
+  "oracle": "0x708555f763f01da6533ca6f5bc3975afb1424158",
+  "vaultCodeHash": "0xf0394c61c81c3eeb65934547d53cf2f3de856192f8b12a83ddd95d99792c7a2e",
+  "settlementCodeHash": "0xe4c3ce5e81778d2ffe56cea8b36a5b70bdcfa7ad851a5d3671502004038f0878",
+  "oracleCodeHash": "0xa1dfb79aeed27e2315ea27c6467d2882f0d7f27a04c146f94df4a0a02e8b29a4",
+  "confirmations": 3
+}

@@ -18,6 +18,7 @@ import { SettlementJournal } from '../packages/clob/settlement-journal.ts';
 import { createSettlementReader } from '../packages/clob/settlement-reader.ts';
 import { SettlementOutcomeBridge } from '../packages/clob/settlement-bridge.ts';
 import { startMarketData } from '../services/clob/market-data.ts';
+import { createAdmissionGate } from '../services/clob/admission-gate.ts';
 import { readFundingSnapshot, buildFundingPublication } from '../packages/clob/funding-reader.ts';
 import { fixtureGasLimit } from './local-fixture-gas.mjs';
 
@@ -146,7 +147,7 @@ try {
     await write(wallet, vault, vaultArtifact, 'deposit', [2_000_000n]);
   }
 
-  // Real signed admission via service.applySigned with Fuji EIP-712.
+  // Real HTTP signed admission with policy-confirmed on-chain escrow; fresh local fixture only.
   matcherDir = mkdtempSync(join(tmpdir(), 'avensdex-phase4-matcher-'));
   settlementDir = mkdtempSync(join(tmpdir(), 'avensdex-phase4-settlement-'));
   const matcherBinding = { chainId: 43113, marketId: 1, settlementContract: settlement };
@@ -155,7 +156,12 @@ try {
   const reader = await createSettlementReader(client, client, settlementIdentity);
   settlementJournal = SettlementJournal.open(settlementDir, settlementIdentity, { confirmations: 2, reader, create: true });
   const bridge = new SettlementOutcomeBridge(journalMatcher, settlementJournal, deploymentId);
-  service = await startMarketData(journalMatcher, 0, () => clock);
+  const admission = createAdmissionGate(primary, secondary, {
+    chainId: 43113, marketId: 1, deploymentId, vault, settlement, oracle, confirmations: 3,
+    vaultCodeHash: keccak256(await client.getCode({ address: vault })),
+    settlementCodeHash: keccak256(await client.getCode({ address: settlement })), oracleCodeHash,
+  }, () => clock);
+  service = await startMarketData(journalMatcher, 0, () => clock, { admission });
 
   ws = new WebSocket(`ws://127.0.0.1:${service.port}/stream`);
   ws.on('message', text => {
@@ -181,8 +187,23 @@ try {
   const longSig = await alice.signTypedData(longTyped);
   const shortSig = await bob.signTypedData(shortTyped);
 
-  await service.applySigned({ type: 'order', order: longInput, signature: longSig });
-  await service.applySigned({ type: 'order', order: shortInput, signature: shortSig });
+  const post = envelope => fetch(`http://127.0.0.1:${service.port}/${envelope.type === 'order' ? 'orders' : 'cancel'}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(envelope),
+  });
+  const longEnvelope = { type: 'order', order: longInput, signature: longSig };
+  assert.equal((await post(longEnvelope)).status, 503, 'unreserved order must not reach the book');
+  assert.equal(journalMatcher.snapshot().orders.length, 0);
+  const required = order => {
+    const notional = BigInt(order.size6) * BigInt(order.limitPrice18) / 10n ** 18n, leverage = BigInt(order.leverage);
+    return (notional + leverage - 1n) / leverage + (notional * 3n + 9999n) / 10000n;
+  };
+  await write(alice, settlement, settlementArtifact, 'reserveOrder', [longTyped.message, longSig, required(longInput)]);
+  await write(bob, settlement, settlementArtifact, 'reserveOrder', [shortTyped.message, shortSig, required(shortInput)]);
+  await mine(); await mine();
+  for (const envelope of [longEnvelope, { type: 'order', order: shortInput, signature: shortSig }]) {
+    const response = await post(envelope); assert.equal(response.status, 202);
+    const result = await response.json(); assert.equal(result.status, 'accepted_provisional'); assert.equal(result.filled, false);
+  }
 
   const trade = journalMatcher.snapshot().trades.at(-1);
   assert(trade, 'expected matched trade');
@@ -227,7 +248,9 @@ try {
   const cancel = { trader: longInput.trader, orderHash: longOrderHash, nonce: '1', expiry: clock + 600 };
   const cancelTyped = cancelTypedData(journalMatcher.binding, cancel, clock);
   const cancelSignature = await alice.signTypedData(cancelTyped);
-  await service.applySigned({ type: 'cancel', cancel, signature: cancelSignature });
+  const cancelledResponse = await post({ type: 'cancel', cancel, signature: cancelSignature });
+  assert.equal(cancelledResponse.status, 202);
+  assert.equal((await cancelledResponse.json()).onchainCancellationRequired, true);
   assert.equal(journalMatcher.snapshot().orders.find(o => o.id === longOrderHash).resting, false);
   // An offchain cancellation acknowledgment is not an onchain cancellation receipt.
   await write(alice, settlement, settlementArtifact, 'cancelOrder', [cancelTyped.message, cancelSignature]);

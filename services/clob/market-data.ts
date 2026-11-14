@@ -1,4 +1,6 @@
 import { createServer } from 'node:http';
+import { createIngress } from './ingress.ts';
+import type { AdmissionGate } from './admission-gate.ts';
 import { WebSocketServer, WebSocket } from 'ws';
 import { JournaledMatcher } from '../../packages/clob/journal.ts';
 import { MAX_FEED_BYTES, exact, type Command, type Event } from '../../packages/clob/engine.ts';
@@ -19,12 +21,16 @@ export function sendBounded(socket: Pick<WebSocket, 'readyState' | 'bufferedAmou
   try { socket.send(text); return true; }
   catch { socket.terminate(); return false; }
 }
-function allowedOrigin(origin: string | undefined) {
+function allowedOrigin(origin: string | undefined, origins: readonly string[]) {
   if (!origin) return true; // CLI/native local clients do not send a browser Origin.
-  try { const url = new URL(origin); return ['http:', 'https:'].includes(url.protocol) && ['localhost', '127.0.0.1'].includes(url.hostname); }
+  try { const url = new URL(origin); return url.origin === origin && (origins.includes(origin) || (['http:', 'https:'].includes(url.protocol) && ['localhost', '127.0.0.1'].includes(url.hostname))); }
   catch { return false; }
 }
-export async function startMarketData(journal: JournaledMatcher, port = 8787, clock = () => Math.floor(Date.now() / 1000)) {
+export async function startMarketData(journal: JournaledMatcher, port = 8787, clock = () => Math.floor(Date.now() / 1000),
+  options: { admission?: AdmissionGate; origins?: readonly string[] } = {}) {
+  const origins = [...(options.origins ?? [])];
+  if (origins.length > 16 || origins.some(origin => { try { const url = new URL(origin); return url.protocol !== 'https:' || url.origin !== origin; } catch { return true; } })) throw Error('INVALID_ALLOWED_ORIGINS');
+  if (options.admission && JSON.stringify(options.admission.binding) !== JSON.stringify(journal.binding)) throw Error('ADMISSION_JOURNAL_BINDING_MISMATCH');
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw Error('INVALID_PORT');
   const startup = journal.snapshot();
   const at = () => Math.max(startup.clock, clock());
@@ -38,15 +44,25 @@ export async function startMarketData(journal: JournaledMatcher, port = 8787, cl
       || now < funding.markSourceTime || now - funding.markSourceTime > Number(funding.parameters[9])) return null;
     return { ...funding, fundingAvailable: now < funding.rateValidUntil };
   }
-  const server = createServer({ maxHeaderSize: 8192, requestTimeout: 5000, headersTimeout: 5000 }, (req, res) => {
+  const server = createServer({ maxHeaderSize: 8192, requestTimeout: 5000, headersTimeout: 5000 }, async (req, res) => {
+    try {
     res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    if (!allowedOrigin(req.headers.origin)) { res.writeHead(403).end('{"error":"ORIGIN_REFUSED"}'); return; }
+    if (!allowedOrigin(req.headers.origin, origins)) { res.writeHead(403).end('{"error":"ORIGIN_REFUSED"}'); return; }
+    if (req.headers.origin) {
+      res.setHeader('Access-Control-Allow-Origin', req.headers.origin); res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    }
+    if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
+    if (ingress && !journal.writable && ['/orders', '/cancel', '/admission/ready'].includes(req.url ?? '')) { res.writeHead(503).end('{"error":"JOURNAL_UNAVAILABLE"}'); return; }
+    if (ingress && await ingress(req, res)) return;
     if (req.method !== 'GET') {
       // No unverified order/cancel/position/admin write API, demo mode or private signer.
       res.setHeader('Connection', 'close'); res.writeHead(503).end('{"error":"FUJI_ADMISSION_AND_SETTLEMENT_UNAVAILABLE"}'); return;
     }
-    if (req.url === '/snapshot') { res.end(JSON.stringify(frame())); return; }
+    if (req.url === '/snapshot' || req.url === '/orderbook') { res.end(JSON.stringify(frame())); return; }
+    if (req.url === '/orders') { res.end(JSON.stringify({ orders: journal.snapshot().orders, settlement: 'unavailable' })); return; }
+    if (req.url === '/trades') { res.end(JSON.stringify({ trades: journal.snapshot().trades, provisional: true })); return; }
     if (req.url === '/funding') {
       const data = fundingView();
       if (!data) { res.writeHead(503).end('{"error":"CANONICAL_FUNDING_UNAVAILABLE"}'); return; }
@@ -58,7 +74,9 @@ export async function startMarketData(journal: JournaledMatcher, port = 8787, cl
         journalWritable: journal.writable, orderAdmission: 'unavailable', settlement: 'unavailable', confirmedPositions: 'unavailable', ready: false })); return;
     }
     res.writeHead(404).end('{"error":"NOT_FOUND"}');
+    } catch { if (!res.headersSent) res.writeHead(503); res.end('{"error":"SERVICE_UNAVAILABLE"}'); }
   });
+  const ingress = options.admission ? createIngress(options.admission, applySigned) : null;
   server.maxConnections = 64; server.maxRequestsPerSocket = 100; server.keepAliveTimeout = 5000;
   const wss = new WebSocketServer({ noServer: true, maxPayload: 1024, perMessageDeflate: false });
   const frame = () => {
@@ -66,7 +84,7 @@ export async function startMarketData(journal: JournaledMatcher, port = 8787, cl
     return { type: 'snapshot', streamId: data.streamId, marketId: data.marketId, seq: data.seq, at: data.clock, data };
   };
   server.on('upgrade', (req, socket, head) => {
-    if (req.url !== '/stream' || !allowedOrigin(req.headers.origin) || wss.clients.size >= MAX_CLIENTS) {
+    if (req.url !== '/stream' || !allowedOrigin(req.headers.origin, origins) || wss.clients.size >= MAX_CLIENTS) {
       socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\nContent-Length: 0\r\n\r\n'); return;
     }
     wss.handleUpgrade(req, socket, head, ws => wss.emit('connection', ws, req));
@@ -96,6 +114,7 @@ export async function startMarketData(journal: JournaledMatcher, port = 8787, cl
   }
   function apply(command: Command, proof: unknown = null) { return publish(journal.apply(command, proof)); }
   async function applySigned(envelope: unknown) {
+    if (stopped) throw Error('SERVICE_STOPPED');
     const result = await admitSigned(journal, envelope, clock());
     return { ...publish(result.events), settlement: 'unavailable' as const };
   }
