@@ -1,0 +1,12 @@
+# Publish only the frontend; operator tools and local evidence never enter the upload.
+*
+!apps/
+!apps/web/
+!apps/web/**
+apps/web/node_modules/
+apps/web/.next*/
+apps/web/.vercel/
+apps/web/.env*
+apps/web/*.tsbuildinfo
+apps/web/**/node_modules/
+apps/web/**/.env*

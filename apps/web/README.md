@@ -1,0 +1,9 @@
+# Avensdex web
+
+Existing supplied landing page and terminal, adapted to Avalanche Fuji (43113), AVAX-PERP and six-decimal Circle test USDC. Layout and applicable notices are retained; see `NOTICE` and `licenses/` for provenance. User confirmed permission to publish supplied code and artwork on 2026-11-14.
+
+Run `npm ci`, `npm run typecheck`, `npm run build`, then `npm start`. Node 22 is required. Vercel project root is `apps/web`, framework Next.js. Public configuration uses `NEXT_PUBLIC_APP_URL` and `NEXT_PUBLIC_FUJI_{CHAIN_ID,RPC_URL,SECONDARY_RPC_URL,COLLATERAL,VAULT,SETTLEMENT,ORACLE}`. These values are public chain metadata, never signing credentials.
+
+This release is **read-only**: the public contracts are deployed but paused; wallet writes are explicitly disabled pending durable transaction-recovery review. Public order admission, order book, fill history and portfolio indexing are unavailable, not simulated. `/api/ready` fails closed even if custody becomes active, until an actual order-admission service is connected. `/api/fuji/markets/1` reads the configured on-chain oracle through paired public providers; it does not publish rates or prices. Market data can be unavailable when feeds expire or providers disagree.
+
+No operator keys, keystore/password files, journals, recovery material or legacy deployment scripts belong in this application or Vercel environment. The root `.vercelignore` restricts CLI uploads to frontend source and excludes local env/build/dependency files. Frontend publication is not evidence of a completed public trading lifecycle or production readiness.

@@ -1,0 +1,6 @@
+Avensdex frontend preserves the user-supplied NEARFlow terminal and landing source.
+Source provenance: config/nearflow-source.json and docs/NEARFLOW_BASELINE.md in the repository root.
+The user explicitly confirmed permission to publish the supplied landing code and artwork in this session on 2026-11-14.
+This is reused source with Avensdex integration changes, not a claim of original authorship.
+Retain the applicable third-party notices under licenses/. No project-wide open-source license is implied.
+Credentials, local wallet material, generated outputs and old deployment scripts are excluded.
