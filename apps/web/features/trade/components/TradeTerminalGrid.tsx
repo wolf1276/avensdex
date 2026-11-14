@@ -4,36 +4,24 @@ import { useState } from "react";
 import { AccountBar } from "@/features/trade/components/AccountBar";
 import { BottomPanel } from "@/features/trade/components/BottomPanel";
 import { MarketHeader } from "@/features/trade/components/MarketHeader";
-import { OrderBook } from "@/features/trade/components/OrderBook";
 import { OrderEntry } from "@/features/trade/components/OrderEntry";
 import { TradeChart } from "@/features/trade/components/TradeChart";
-import { useTradeSettings } from "@/stores/settings";
 import type { MarketConfig } from "@/config";
 
-type MobileTab = "chart" | "book" | "ticket" | "positions";
+type MobileTab = "chart" | "ticket" | "positions";
 
 export function TradeTerminalGrid({ market }: { market: MarketConfig }) {
-  const hideOrderBook = useTradeSettings((s) => s.hideOrderBook);
   const [mobileTab, setMobileTab] = useState<MobileTab>("chart");
   // `side` is lifted here so the mobile bottom bar can open the ticket pre-set
   // to long/short. OrderEntry falls back to its own state when not controlled.
   const [side, setSide] = useState<"buy" | "sell">("buy");
 
-  // Desktop (lg+) grid template — applied only via `lg:` so it is inert on the
-  // mobile flex-column stack. Both branches are written as literal class strings
-  // so Tailwind's JIT can see them.
-  const gridClasses = hideOrderBook
-    ? "lg:grid lg:[grid-template-rows:auto_1fr_auto] lg:[grid-template-columns:minmax(0,1fr)_360px] lg:[grid-template-areas:'info_ticket'_'chart_ticket'_'pos_ticket']"
-    : "lg:grid lg:[grid-template-rows:auto_1fr_auto] lg:[grid-template-columns:minmax(0,1fr)_270px_360px] lg:[grid-template-areas:'info_book_ticket'_'chart_book_ticket'_'pos_pos_ticket']";
-
-  // Mobile panel visibility (display:none keeps panels — and the chart iframe —
-  // mounted so switching tabs never re-initialises websockets or the chart).
-  const activeTab = hideOrderBook && mobileTab === 'book' ? 'chart' : mobileTab;
-  const vis = (tab: MobileTab) => (activeTab === tab ? "flex" : "hidden");
+  const gridClasses = "lg:grid lg:[grid-template-rows:auto_minmax(280px,1fr)_auto] lg:[grid-template-columns:minmax(0,1fr)_360px] lg:[grid-template-areas:'info_ticket'_'chart_ticket'_'pos_ticket']";
+  const activeTab = mobileTab;
+  const vis = (tab: MobileTab) => activeTab === tab ? "flex" : "hidden";
 
   const tabs: { key: MobileTab; label: string }[] = [
     { key: "chart", label: "Chart" },
-    ...(hideOrderBook ? [] : [{ key: "book" as const, label: "Order Book" }]),
     { key: "ticket", label: "Trade" },
     { key: "positions", label: "Positions" },
   ];
@@ -46,6 +34,7 @@ export function TradeTerminalGrid({ market }: { market: MarketConfig }) {
         className="sticky top-0 z-20 lg:static lg:z-auto"
       >
         <MarketHeader market={market} />
+        <p role="status" className="border-b border-border bg-background px-4 py-2 text-xs leading-relaxed text-muted-foreground">Fuji validation preview · No active Avensdex liquidity. Order book hidden; trading paused. External chart prices are reference data, not executable quotes.</p>
       </div>
 
       {/* ── Mobile tab switcher (hidden on desktop) ── */}
@@ -72,16 +61,6 @@ export function TradeTerminalGrid({ market }: { market: MarketConfig }) {
       >
         <TradeChart market={market} />
       </div>
-
-      {/* ── Order book ── */}
-      {!hideOrderBook && (
-        <div
-          style={{ gridArea: "book" }}
-          className={`${vis("book")} h-[64dvh] min-h-0 flex-col overflow-hidden border border-[#2A2A31] bg-[#19191A] lg:flex lg:h-auto`}
-        >
-          <OrderBook market={market} />
-        </div>
-      )}
 
       {/* ── Order ticket ── */}
       <div

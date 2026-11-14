@@ -7,7 +7,6 @@ import { useTradeSettings, type SettingKey } from '@/stores/settings'
 const ROWS: { key: SettingKey; label: string }[] = [
   { key: 'hidePnl', label: 'Hide PNL' },
   { key: 'hideLiqPrice', label: 'Hide Liquidation Price' },
-  { key: 'hideOrderBook', label: 'Hide Order Book' },
 ]
 
 export function SettingsMenu() {
