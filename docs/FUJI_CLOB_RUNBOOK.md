@@ -2,6 +2,8 @@
 
 **Current status:** the [supported local Phase 3 gate](PHASE3_STATUS.md) passes with canonical manual collateral buckets, signed atomic bilateral settlement, funding/close/liquidation, canonical reconciliation and owner withdrawals. Fuji deposits, oracle publication and settlement writes remain hard-disabled; public deployment/signing tools and qualified activation remain unavailable. The matcher/market-data service is implemented and tested locally; public order admission, confirmed positions and settlement remain unavailable. These are preparation/verification instructions, not a claim of deployment or approval to sign.
 
+The [draft bounded deployment plan and read-only preflight](FUJI_DEPLOYMENT_PLAN.md) record the dedicated public deployer, proposed budget, observed candidate/proxy data and remaining approvals. The draft is not signing authorization. A funded two-provider preflight still reports deployment blocked; no credentials are needed for it.
+
 ## Checks available now
 
 ```sh
@@ -10,6 +12,8 @@ npm test
 npm run test:funding:rust
 npm run bench:clob
 python3 -m scripts.compare_fuji_rpcs
+# Read-only; exit 2 means observations passed but deployment remains blocked.
+python3 -m scripts.preflight_fuji --deployer 0xee5656873609373fF0224A1D3e5F03a8fB16B6F4
 ```
 
 Hosted [Foundation checks at `6e03f26`](https://github.com/wolf1276/avensdex/actions/runs/43457508279) completed successfully. A separate clean tracked-source archive of that revision also passed npm install/tests and locked Rust reference locally. There are no source snapshot or private credentials required for those current checks.
