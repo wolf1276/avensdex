@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "projectId": "6af8a9c1003c12d6113a",
+  "endpoint": "https://sgp.cloud.appwrite.io/v1",
+  "functionId": "avensdex-api",
+  "functionUrl": "https://avensdex-api.sgp.appwrite.run",
+  "functionDeploymentId": "6af8b4127ea949eb373e",
+  "sourceRevision": "e3c24548eff180c63255ef4b282b5e895446d39c",
+  "databaseId": "avensdex-clob",
+  "collectionId": "journal-v1",
+  "chainId": 43113,
+  "automaticSettlement": false,
+  "walletSignerHosted": false
+}

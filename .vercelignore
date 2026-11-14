@@ -9,6 +9,8 @@ AGENTS.md
 Dockerfile.clob
 .dockerignore
 /deploy/
+/dist/
+/appwrite.config.json
 **/node_modules/
 **/.next*/
 **/.vercel/

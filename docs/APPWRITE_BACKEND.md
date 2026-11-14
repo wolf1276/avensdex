@@ -26,6 +26,14 @@ Set public metadata variables `APPWRITE_ENDPOINT`, `CLOB_DATABASE_ID`, `CLOB_COL
 
 Browser requests are restricted to the exact Vercel origin. Bodies, RPC timeouts, response pages and retained history are bounded. Provider execution quotas/WAF controls are still needed for public abuse protection; cold workers do not share an in-memory rate limiter.
 
+## Public deployment and frontend connection
+
+The Function is deployed at **https://avensdex-api.sgp.appwrite.run** in the existing `avensdex` Singapore project. Public identifiers and the actual reviewed source revision are recorded in `config/appwrite-backend.json`; no credentials are stored there. The platform build completed successfully and a real Function execution plus public `/health` returned 200 with database-backed state. Public `/snapshot` returned the genuine empty sequence-zero book; `/ready` remained 503, foreign origins and unsigned order requests were refused, and the collection still contained only its original immutable header. No fixture orders or chain transactions were injected into production.
+
+A guest Appwrite Realtime subscription from the configured Vercel origin completed its `connected` handshake. Delivery/recovery of genuine trading events is not established by that handshake. Vercel uses the server-only `CLOB_BACKEND_URL` for bounded, validated read-through of the actual order book; prices/sizes are converted from integer protocol units. Provisional matches are not relabeled as confirmed trades.
+
+This Function is separate from the previously created Appwrite **Site**. Do not use a successful Site build as backend execution evidence. Automatic settlement is still unavailable and the deployed contracts remain paused. Wallet connection remains disabled pending investigation of the reported warning.
+
 ## Checks and limits
 
 `npm run test:appwrite` covers cold starts, real EIP-712 verification, concurrent writers, lost acknowledgments, integrity/identity refusal, REST pagination and endpoint/write bounds using isolated fixtures. `npm run test:phase4:evm` separately tests real local EVM escrow and HTTP admission through close/withdraw; neither establishes public Fuji fills.

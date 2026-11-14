@@ -8,7 +8,7 @@
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint",
-    "test": "tsx --test lib/publication.test.ts lib/market/*.test.ts lib/format.test.ts"
+    "test": "tsx --test lib/publication.test.ts lib/market/*.test.ts lib/evm/*.test.ts lib/format.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

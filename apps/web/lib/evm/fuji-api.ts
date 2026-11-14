@@ -5,6 +5,7 @@
 import { pairedClients, pairedRead, configuredAddresses, type PairedClients } from "./paired";
 import { vaultAbi, settlementAbi, oracleAbi } from "./abis";
 import { ACTIVE_MARKETS, FUJI_CHAIN_ID } from "@/config";
+import { readBackendBook } from './backend-book';
 
 const ok = (body: unknown) => ({ status: 200, body });
 const unavailable = (feature: string) => ({ status: 503, body: {
@@ -110,15 +111,14 @@ export async function fujiGet(url: URL): Promise<{ status: number; body: unknown
     }
     if (path[0] === "markets") {
       if (!configured) return notConfigured;
-      const clients = await pairedClients();
-      if (!path[1]) return ok([await marketBody(clients)]);
+      if (!path[1]) return ok([await marketBody(await pairedClients())]);
       const marketId = Number(path[1]);
       if (!Number.isSafeInteger(marketId) || marketId !== 1) return badRequest("Only market 1 (AVAX-PERP) exists on this deployment");
-      if (path[2] === "orderbook") return unavailable("The order book");
+      if (path[2] === "orderbook") return ok(await readBackendBook());
       if (path[2] === "trades") return unavailable("Trade history");
       if (path[2] === "candles") return unavailable("Candles");
       if (path[2]) return { status: 404, body: { error: "Unknown market endpoint" } };
-      return ok(await marketBody(clients));
+      return ok(await marketBody(await pairedClients()));
     }
     if (path[0] === "orders") {
       if (path[1] && path[1] !== "list") return { status: 405, body: { error: "Authorize order changes directly in your wallet" } };
